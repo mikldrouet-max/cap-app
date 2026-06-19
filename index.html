@@ -1556,11 +1556,15 @@ const $=id=>document.getElementById(id);
 // Pastille icône iPhone/Android (Web App Badging API — iOS 16.4+)
 function updateAppBadge(nLate, nToday){
   const count = nLate + nToday;
-  if(!("setAppBadge" in navigator)) return;
+  console.log("[BADGE] late="+nLate+" today="+nToday+" total="+count);
+  if(!("setAppBadge" in navigator)){ 
+    console.log("[BADGE] setAppBadge non supporté"); 
+    return; 
+  }
   if(count > 0){
-    navigator.setAppBadge(count).catch(()=>{});
+    navigator.setAppBadge(count).then(()=>console.log("[BADGE] set à "+count)).catch(e=>console.error("[BADGE] erreur set:",e));
   } else {
-    navigator.clearAppBadge().catch(()=>{});
+    navigator.clearAppBadge().then(()=>console.log("[BADGE] cleared")).catch(e=>console.error("[BADGE] erreur clear:",e));
   }
 }
 
