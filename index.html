@@ -392,12 +392,7 @@ body.dark .edit{background:#15171F}
 body:not(.dark) .theme-btn::after{content:"🌙"}
 body.dark .theme-btn::after{content:"☀️"}
 
-@media(max-width:599px){
-  .quick-box{flex-wrap:wrap; padding:10px 12px}
-  #quickInput{flex:1 1 60%}
-  #quickDate{flex:1 1 auto; max-width:none; order:2}
-  .quick-add-btn{order:3}
-}
+/* quick-box mobile → géré dans bloc responsive ci-dessous */
 @media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} }
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 
@@ -594,6 +589,138 @@ body.dark .g-row:hover{background:#171A22}
   .g-head{width:130px}
   .g-axis{--g-label:130px}
 }
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — Mobile first
+   Breakpoints : 599 (iPhone), 899 (tablette), 1400+ (grand écran)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── iPhone et petits écrans ──────────────────────────── */
+@media(max-width:599px){
+
+  /* Header compact */
+  .head-in{
+    padding:10px 12px 8px;
+    gap:8px;
+    flex-wrap:nowrap;
+  }
+  .today-label{ display:none }          /* date cachée, gagne de la place */
+  .dir-bar{ display:none !important }   /* chemin GitHub trop long */
+  #syncText{ display:none }             /* garde juste le dot coloré */
+  #exportBtn{ display:none !important } /* export non pertinent sur mobile */
+
+  /* ws-switch plus compact */
+  .ws-btn{ padding:5px 11px; font-size:.78rem }
+
+  /* Layout principal */
+  .task-col{
+    padding: 0 12px calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Panneau édition = overlay plein écran sur mobile */
+  #editPanel{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    z-index:200; border-left:none; border-top:none;
+    height:100dvh; overflow-y:auto;
+  }
+  #editPanel.open{ width:100% }
+
+  /* Tâches : touch targets généreux */
+  .task-row{ padding:13px 12px; min-height:52px }
+  .zone-head{ padding:12px 2px 6px }
+
+  /* Quick add */
+  .quick{ margin:14px 0 4px }
+  .quick-box{ flex-wrap:wrap; padding:10px 12px; gap:8px }
+  #quickInput{
+    flex:1 1 100%;
+    font-size:1rem;
+    padding:6px 0;
+    order:1;
+  }
+  #quickDate{
+    flex:1 1 auto;
+    max-width:none;
+    order:2;
+  }
+  .quick-add-btn{
+    flex:1 1 auto;
+    order:3;
+    text-align:center;
+    padding:10px 12px;
+  }
+  .quick-help{ display:none }           /* syntaxe cachée sur mobile */
+  #autoc{ width:calc(100vw - 24px) }
+
+  /* Badge */
+  #badge{ margin:12px 0 0; font-size:.88rem }
+
+  /* View switch */
+  .view-switch{ margin:14px 0 0 }
+  .view-switch button{ padding:5px 14px; font-size:.82rem }
+
+  /* Boutons icon-btn : touch target minimum 44px */
+  .icon-btn{ width:38px; height:38px }
+
+  /* ── Vue Parents / Gantt : touch targets ── */
+
+  /* Flèche dépliage : zone de tap 44x44px */
+  .g-chev{
+    font-size:1rem;
+    min-width:44px; min-height:44px;
+    display:flex; align-items:center; justify-content:center;
+    margin:-8px -4px;               /* compense le layout sans changer le flux */
+    border-radius:8px;
+    background:var(--line2);
+    color:var(--ink2);
+  }
+  .g-chev:hover, .g-chev:active{ background:var(--line); color:var(--ink) }
+
+  /* Case à cocher parents dans Gantt */
+  .g-cb{ width:26px; height:26px; border-radius:7px; margin-top:0 }
+  .g-cb::after{ font-size:.8rem !important }
+
+  /* Case à cocher sujets dans liste tâches */
+  .subj-row .cb{ width:26px; height:26px }
+  .subj-row .cb::after{ font-size:.78rem !important }
+
+  /* Ligne parent dans Gantt : plus haute */
+  .g-row{ min-height:60px }
+  .g-head{ gap:10px; padding:10px 10px 10px 12px; align-items:center }
+
+  /* Zone-head (sections En retard, Aujourd'hui…) : flèche + zone tap */
+  .zone-head .chev{
+    font-size:1rem;
+    min-width:32px; min-height:32px;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .zone-head.clickable{ min-height:44px }
+
+  /* Ligne sous-tâche dans vue sujets */
+  .subj-row{ min-height:52px; padding:10px 12px }
+}
+
+/* ── Tablette (600–899px) ──────────────────────────────── */
+@media(min-width:600px) and (max-width:899px){
+  .task-col{ padding:0 20px 96px }
+  .head-in{ padding:12px 20px 10px }
+  #editPanel{
+    position:fixed; top:54px; left:0; right:0; bottom:0;
+    z-index:200; border-left:none; height:auto; overflow-y:auto;
+  }
+  #editPanel.open{ width:100% }
+}
+
+/* ── Grand écran (≥1400px) ─────────────────────────────── */
+@media(min-width:1400px){
+  .task-col{ max-width:1100px; padding:0 40px 96px }
+  #editPanel.open{ width:420px }
+}
+
+/* ── Zone sécurisée iPhone X+ (notch / home bar) ───────── */
+header{
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 </style>
 </head>
 <body>
