@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="28" fill="#2F4ED8"/>
+  <!-- Lettre C : arc ouvert à droite, trait blanc épais -->
+  <path d="M82 24 A36 36 0 1 0 82 96" stroke="white" stroke-width="20" fill="none" stroke-linecap="round"/>
+  <!-- Encoche pour ouvrir proprement le C -->
+  <rect x="64" y="8" width="36" height="20" fill="#2F4ED8"/>
+  <rect x="64" y="92" width="36" height="20" fill="#2F4ED8"/>
+  <!-- Le point "." de Cap. -->
+  <circle cx="92" cy="107" r="10" fill="white"/>
+</svg>
