@@ -1554,17 +1554,17 @@ function rollRecurring(){
 const $=id=>document.getElementById(id);
 
 // Pastille icône iPhone/Android (Web App Badging API — iOS 16.4+)
+let badgeAlert=false;
 function updateAppBadge(nLate, nToday){
   const count = nLate + nToday;
-  console.log("[BADGE] late="+nLate+" today="+nToday+" total="+count);
   if(!("setAppBadge" in navigator)){ 
-    console.log("[BADGE] setAppBadge non supporté"); 
+    if(!badgeAlert){ alert("Badge: non supporté"); badgeAlert=true; }
     return; 
   }
   if(count > 0){
-    navigator.setAppBadge(count).then(()=>console.log("[BADGE] set à "+count)).catch(e=>console.error("[BADGE] erreur set:",e));
+    navigator.setAppBadge(count).catch(e=>{ if(!badgeAlert){ alert("Badge: erreur "+e); badgeAlert=true; } });
   } else {
-    navigator.clearAppBadge().then(()=>console.log("[BADGE] cleared")).catch(e=>console.error("[BADGE] erreur clear:",e));
+    navigator.clearAppBadge().catch(e=>{});
   }
 }
 
