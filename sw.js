@@ -1,5 +1,5 @@
 /* Cap. — Service Worker v1 */
-const CACHE = "cap-v1";
+const CACHE = "cap-v2";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 // Installation : mettre le shell en cache
