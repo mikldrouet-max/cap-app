@@ -585,7 +585,7 @@ body.dark .g-row:hover{background:#171A22}
 }
 .subj-done .subj-sub-head{background:var(--line2); color:var(--ink2)}
 
-@media(max-width:640px){
+@media(min-width:600px) and (max-width:640px){
   .g-head{width:130px}
   .g-axis{--g-label:130px}
 }
@@ -660,6 +660,35 @@ body.dark .g-row:hover{background:#171A22}
 
   /* Boutons icon-btn : touch target minimum 44px */
   .icon-btn{ width:38px; height:38px }
+
+  /* ── Vue Parents / Gantt : layout empilé (titre au-dessus, timeline en dessous) ── */
+
+  /* Annuler la largeur fixe de l'étiquette */
+  .gantt{ --g-label:0px }
+  .g-axis{ margin-left:0 }
+
+  /* Empilement vertical : titre | timeline */
+  .g-row{
+    flex-direction:column;
+    min-height:auto;
+  }
+
+  /* En-tête : pleine largeur */
+  .g-head{
+    width:100%;
+    border-right:none;
+    border-bottom:1px solid var(--line2);
+    padding:10px 12px;
+    align-items:center;
+  }
+
+  /* Timeline : pleine largeur, hauteur fixe */
+  .g-track{
+    width:100%;
+    height:48px;
+    padding:6px 12px;
+    flex:none;
+  }
 
   /* ── Vue Parents / Gantt : touch targets ── */
 
