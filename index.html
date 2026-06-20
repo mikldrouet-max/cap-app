@@ -1555,6 +1555,18 @@ const $=id=>document.getElementById(id);
 
 // Pastille icône iPhone/Android (Web App Badging API — iOS 16.4+)
 
+// Web App Badging API — affiche le nombre de tâches en retard + aujourd'hui
+function updateAppBadge(nLate, nToday){
+  const count = nLate + nToday;
+  if(!("setAppBadge" in navigator)) return;
+  if(count > 0){
+    navigator.setAppBadge(count).catch(()=>{});
+  } else {
+    navigator.clearAppBadge().catch(()=>{});
+  }
+}
+
+
 async function init(){
   $("todayLabel").textContent=frDate(TODAY)+" "+fromISO(TODAY).getFullYear();
   $("quickDate").value=TODAY;
@@ -2027,6 +2039,7 @@ function render(){
 
   fill("bLate","cLate",late,"Rien en retard. Bien joué.", sLate, "late");
   fill("bToday","cToday",today,"Rien pour aujourd'hui.", sToday, "today");
+  updateAppBadge(late.length, today.length);
   fill("bTomorrow","cTomorrow",tomorrow,"Rien pour demain.", sTomorrow, "tomorrow");
   // à venir : groupé par jour (à partir d'après-demain)
   $("cSoon").textContent=soon.length;
