@@ -1568,6 +1568,10 @@ function updateAppBadge(nLate, nToday){
 
 
 async function init(){
+  // Demander permission notifications (pour le badge sur iPhone/Mac)
+  if("Notification" in window && Notification.permission === "default"){
+    Notification.requestPermission().catch(()=>{});
+  }
   $("todayLabel").textContent=frDate(TODAY)+" "+fromISO(TODAY).getFullYear();
   $("quickDate").value=TODAY;
 
