@@ -1132,7 +1132,7 @@ function newTask(){
 }
 
 const RX = {
-  task: /^-\s*(?:\[( |x|X|\/)\]\s*)?(.*)$/,
+  task: /^-\s*(?:\[( |x|X|\/|~)\]\s*)?(.*)$/,
   date: /\s*📅\s*(\d{4}-\d{2}-\d{2})/,
   endDate: /\s*🏁\s*(\d{4}-\d{2}-\d{2})/,   // date de fin d'un Sujet
   doneDate: /\s*✅\s*(\d{4}-\d{2}-\d{2})/,
@@ -1181,6 +1181,8 @@ function parseFile(text){
       if(t.kind!=="subject" && (mm=body.match(RX.rec))){ t.rec=parseRec(mm[1]); body=body.replace(RX.rec,""); }
       if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
       else if(RX.lo.test(body)){ t.prio="b"; body=body.replace(RX.lo," "); }
+      // Nettoyage : supprime les [~] parasites accumulés lors d'un bug de synchro antérieur
+      body=body.replace(/(\[~\]\s*)+/g," ");
       t.text=body.replace(/\s+/g," ").trim();
       if(!t.text){ t.raw=true; t.rawLine=line; }
       if(t.kind==="subject"){
