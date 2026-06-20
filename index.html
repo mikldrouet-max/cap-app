@@ -1569,6 +1569,7 @@ function updateAppBadge(nLate, nToday){
 }
 
 async function init(){
+  if(typeof navigator.setAppBadge !== "undefined") alert("Badge: SUPPORTÉ ✓"); else alert("Badge: NON supporté ✗");
   $("todayLabel").textContent=frDate(TODAY)+" "+fromISO(TODAY).getFullYear();
   $("quickDate").value=TODAY;
 
