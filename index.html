@@ -24,6 +24,7 @@
   --line:#E8E6DF; --line2:#F0EEE8;
   --tag:#6B5CA5; --tag-soft:#F1EEF9;
   --pers:#0F6E6E; --pers-soft:#E9F4F4;
+  --standby:#64748B; --standby-soft:#F1F5F9;
   --r:10px;
   --g-label:210px;
   --shadow:0 1px 2px rgba(25,27,33,.05), 0 8px 24px -12px rgba(25,27,33,.12);
@@ -94,6 +95,7 @@ input[type=number].ep-input{width:70px}
 .ep-seg button.on.ss-open{background:var(--accent); color:#fff}
 .ep-seg button.on.ss-wip{background:var(--wip); color:#fff}
 .ep-seg button.on.ss-done{background:var(--ok); color:#fff}
+.ep-seg button.on.ss-standby{background:var(--standby); color:#fff}
 .ep-footer{
   padding:14px 20px 20px; border-top:1px solid var(--line);
   display:flex; gap:10px; align-items:center;
@@ -274,6 +276,9 @@ section.zone{margin-top:26px}
 #zoneToday .zone-head .count{background:var(--accent-soft); color:var(--accent)}
 #zoneTomorrow .zone-head h2{color:var(--ink2)}
 #zoneTomorrow .zone-body{border-left:3px solid var(--accent-line)}
+#zoneStandby .zone-head h2{color:var(--standby)}
+#zoneStandby .zone-head .count{background:var(--standby-soft); color:var(--standby)}
+#zoneStandby .zone-body{border-left:3px solid var(--standby)}
 
 .zone-body{
   background:var(--surface); border:1px solid var(--line); border-radius:14px;
@@ -316,6 +321,9 @@ section.zone{margin-top:26px}
 .task.done .t-text{color:var(--ink3); text-decoration:line-through}
 .task.wip .cb{border-color:var(--wip); background:var(--wip-soft)}
 .task.wip .cb::after{content:"●"; color:var(--wip); font-size:.52rem; line-height:1}
+.task.standby .cb{border-color:var(--standby); background:var(--standby-soft)}
+.task.standby .cb::after{content:"⏸"; color:var(--standby); font-size:.58rem; line-height:1}
+.task.standby .t-text{color:var(--ink2); font-style:italic}
 .t-text .tk{color:var(--tag); font-weight:600}
 .t-text .pk{color:var(--pers); font-weight:600}
 .t-meta{display:flex; gap:10px; align-items:center; margin-top:3px; flex-wrap:wrap}
@@ -380,6 +388,7 @@ body.dark{
   --line:#272B36; --line2:#1F222B;
   --tag:#A78BFA; --tag-soft:#201B30;
   --pers:#2DD4BF; --pers-soft:#0D2023;
+  --standby:#94A3B8; --standby-soft:#1E293B;
   --shadow:0 1px 3px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
 }
 body.dark header{background:rgba(17,19,24,.92)}
@@ -864,6 +873,13 @@ header{
     <div class="zone-body" id="bLater"></div>
   </section>
 
+  <section class="zone closed" id="zoneStandby">
+    <div class="zone-head clickable" data-toggle="zoneStandby">
+      <span class="chev">▼</span><h2>En attente</h2><span class="count" id="cStandby">0</span>
+    </div>
+    <div class="zone-body" id="bStandby"></div>
+  </section>
+
   <section class="zone closed" id="zoneDone">
     <div class="zone-head clickable" data-toggle="zoneDone">
       <span class="chev">▼</span><h2>Terminées — 30 jours</h2><span class="count" id="cDone">0</span>
@@ -901,6 +917,14 @@ header{
       <tr><td><code>r:semaine</code> ou <code>🔁semaine</code></td><td>récurrence (voir ci-dessous)</td></tr>
       <tr><td>ligne indentée dessous</td><td>note libre de la tâche</td></tr>
     </table>
+
+    <h4>Statut En attente (Stand by)</h4>
+    <p>Une tâche <strong>En attente</strong> est garée hors des blocs de dates.
+    Elle n'est pas comptée dans les retards ni dans le badge. Elle reste visible dans son bloc dédié.</p>
+    <table>
+      <tr><td><code>- [~] Tâche bloquée 📅2026-07-01</code></td><td>standby dans le fichier .md</td></tr>
+    </table>
+    <p>Dans l'app : ouvre la tâche → bouton <strong>En attente</strong> dans le panneau État.</p>
 
     <h4>Les parents (tâches qui en regroupent d'autres)</h4>
     <p>Un parent est un dossier à suivre dans le temps. Il a un début et une fin.
@@ -1143,7 +1167,7 @@ function parseFile(text){
       seenTask=true;
       const t=newTask();
       const cbChar=(m[1]||" ").toLowerCase();
-      t.status=cbChar==="x"?"done":cbChar==="/"?"wip":"open";
+      t.status=cbChar==="x"?"done":cbChar==="/"?"wip":cbChar==="~"?"standby":"open";
       t.done=t.status==="done";
       let body=m[2]||"";
       let mm;
@@ -1180,7 +1204,7 @@ function parseFile(text){
 
 function serializeTask(t){
   if(t.raw && !t.text) return t.rawLine;
-  const cbChar=t.status==="done"?"x":t.status==="wip"?"/":" ";
+  const cbChar=t.status==="done"?"x":t.status==="wip"?"/":(t.status==="standby"?"~":" ");
   let l = "- ["+cbChar+"] ";
   if(t.kind==="subject") l+="= ";
   if(t.prio==="h") l+="! ";
@@ -1492,6 +1516,13 @@ async function persist(){
 }
 
 async function loadAll(firstTime){
+  // Lancer le fetch de l'autre espace EN PARALLÈLE dès le début (bascule instantanée)
+  let otherP = null;
+  if(firstTime){
+    const other = workspace === "pro" ? "perso" : "pro";
+    if(!wsCache[other]) otherP = ghRead(other, "main").catch(()=>null);
+  }
+
   const text = await ghRead(workspace, "main");
   if(!text.trim()){
     const pre=workspace==="perso"?"# Tâches Perso":"# Tâches Pro";
@@ -1506,8 +1537,16 @@ async function loadAll(firstTime){
   if(firstTime){
     document.getElementById("authModal").style.display="none";
     document.getElementById("app").style.display="block";
-    // Précharger l'autre espace en arrière-plan (switch instantané)
-    preloadOtherWorkspace();
+    // Résoudre le fetch parallèle de l'autre espace
+    if(otherP){
+      const other = workspace === "pro" ? "perso" : "pro";
+      otherP.then(txt => {
+        if(txt !== null){
+          const m = txt.trim() ? parseFile(txt) : {preamble:[], tasks:[]};
+          wsCache[other] = { model: m, lastSeenText: txt };
+        }
+      });
+    }
   }
   updateDirPath();
   render();
@@ -1568,10 +1607,6 @@ function updateAppBadge(nLate, nToday){
 
 
 async function init(){
-  // Demander permission notifications (pour le badge sur iPhone/Mac)
-  if("Notification" in window && Notification.permission === "default"){
-    Notification.requestPermission().catch(()=>{});
-  }
   $("todayLabel").textContent=frDate(TODAY)+" "+fromISO(TODAY).getFullYear();
   $("quickDate").value=TODAY;
 
@@ -1816,6 +1851,7 @@ function openEditPanel(t){
           '<button data-s="open" class="ss-open '+((!t.status||t.status==="open")?"on":"")+'">Ouvert</button>'+
           '<button data-s="wip" class="ss-wip '+(t.status==="wip"?"on":"")+'">En cours</button>'+
           '<button data-s="done" class="ss-done '+(t.status==="done"?"on":"")+'">Clos</button>'+
+          '<button data-s="standby" class="ss-standby '+(t.status==="standby"?"on":"")+'">En attente</button>'+
         '</div>'+
       '</div>'+
       // --- Tâche : échéance ---
@@ -2014,7 +2050,9 @@ function render(){
 
   if(view==="subjects"){ renderSubjects(); renderFilters(); return; }
 
-  const open=model.tasks.filter(t=>!t.done && t.kind!=="subject" && passFilter(t));
+  const standby=model.tasks.filter(t=>!t.done && t.kind!=="subject" && t.status==="standby" && passFilter(t))
+    .sort((a,b)=>(a.date||"9999")<(b.date||"9999")?-1:1);
+  const open=model.tasks.filter(t=>!t.done && t.kind!=="subject" && t.status!=="standby" && passFilter(t));
   const TOMORROW=addDays(TODAY,1);
   const horizon=addDays(TODAY,7);
   const late=sortTasks(open.filter(t=>t.date<TODAY));
@@ -2039,6 +2077,7 @@ function render(){
   showZone("zoneTomorrow", tomorrow.length, sTomorrow.length);
   showZone("zoneSoon",     soon.length,     sSoon.length);
   showZone("zoneLater",    later.length,    sLater.length);
+  showZone("zoneStandby",  standby.length,  0);
   $("zoneDone").style.display = done.length ? "" : "none";
 
   fill("bLate","cLate",late,"Rien en retard. Bien joué.", sLate, "late");
@@ -2054,6 +2093,7 @@ function render(){
   }else $("bSoon").innerHTML="";
   $("bSoon").innerHTML+=subjSubBlockHTML("soon",sSoon);
   fill("bLater","cLater",later,"Rien de planifié plus loin.", sLater, "later");
+  fill("bStandby","cStandby",standby,"Aucune tâche en attente.");
   fill("bDone","cDone",done,"Aucune tâche terminée récemment.");
   renderFilters();
 }
@@ -2192,7 +2232,7 @@ function updateBadge(){
 
   // Stats tâches ouvertes pour un tableau de tâches donné
   function wsTaskStats(tasks){
-    const open=tasks.filter(t=>!t.done && t.kind!=="subject");
+    const open=tasks.filter(t=>!t.done && t.kind!=="subject" && t.status!=="standby");
     return {nLate:open.filter(t=>t.date<TODAY).length, nToday:open.filter(t=>t.date===TODAY).length};
   }
 
