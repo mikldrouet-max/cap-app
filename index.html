@@ -1487,9 +1487,11 @@ async function mergeExternal(){
   if(lastSeenText !== null && disk !== lastSeenText){
     const baseSet=new Set((lastSeenText||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean));
     const ours=new Set(model.tasks.map(t=>serializeTask(t).split("\n")[0].trim()));
+    const oursText=new Set(model.tasks.map(t=>t.text.trim())); // identité par texte nu
     const added=parseFile(disk).tasks.filter(t=>{
       const line=serializeTask(t).split("\n")[0].trim();
-      return !baseSet.has(line) && !ours.has(line) && !baseSet.has(t.rawLine?.trim()||"§");
+      // exclure si : ligne identique déjà connue, OU texte nu déjà dans le modèle (tâche modifiée ≠ tâche nouvelle)
+      return !baseSet.has(line) && !ours.has(line) && !oursText.has(t.text.trim()) && !baseSet.has(t.rawLine?.trim()||"§");
     });
     model.tasks.push(...added);
     if(added.length) toast(added.length+" tâche(s) récupérée(s) d'un autre appareil");
@@ -1545,7 +1547,7 @@ async function loadAll(firstTime){
     if(otherP){
       const other = workspace === "pro" ? "perso" : "pro";
       otherP.then(txt => {
-        if(txt !== null){
+        if(txt !== null && !wsCache[other]){ // seulement si aucun loadAll(false) n'a déjà rempli le cache
           const m = txt.trim() ? parseFile(txt) : {preamble:[], tasks:[]};
           wsCache[other] = { model: m, lastSeenText: txt };
         }
@@ -1685,8 +1687,10 @@ function showAuthModal(){
 /* Au retour sur l'onglet : recharger si le fichier a changé ailleurs. */
 window.addEventListener("focus", async()=>{
   if(!ghAuth.token || !lastSeenText) return;
+  const wsAtStart = workspace; // capturer avant l'await — workspace peut changer
   try{
     const disk=await readMain();
+    if(workspace !== wsAtStart) return; // workspace a changé pendant le fetch → abort
     if(disk!==lastSeenText){
       model=parseFile(disk); lastSeenText=disk;
       rollRecurring(); render();
