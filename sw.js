@@ -1,4 +1,4 @@
-/* Cap. — Service Worker v7 */
+/* Cap. — Service Worker v8 */
 const CACHE = "cap-v2";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 

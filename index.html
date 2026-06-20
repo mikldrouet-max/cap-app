@@ -899,7 +899,7 @@ header{
 <div id="helpModal">
   <div class="help-card">
     <h3>Comment ça marche</h3>
-    <p>Tout est stocké dans <code>pro.md</code> et <code>perso.md</code>, dans ton dépôt GitHub privé <code>cap-data</code>.</p>
+    <p>Tout est stocké dans <code>pro.md</code> et <code>perso.md</code>, dans ton dépôt GitHub privé <code>cap-data</code>. Les fichiers sont chiffrés AES-256-GCM — seule ta phrase secrète les déchiffre.</p>
 
     <h4>Ajouter une tâche depuis l'iPhone</h4>
     <p>Ouvre <code>pro.md</code> dans GitHub (ou l'app depuis l'iPhone), puis ajoute une ligne en bas :</p>
@@ -910,7 +910,7 @@ header{
 
     <h4>La syntaxe complète</h4>
     <table>
-      <tr><td><code>#mot</code></td><td>catégorie</td></tr>
+      <tr><td><code>#mot</code></td><td>catégorie / tag</td></tr>
       <tr><td><code>@nom</code></td><td>personne concernée</td></tr>
       <tr><td><code>!</code> / <code>__</code></td><td>priorité haute / basse (seule = normale). <code>↓</code> reste accepté.</td></tr>
       <tr><td><code>📅2026-06-20</code> ou <code>demain</code>, <code>lundi</code>, <code>le 15</code>…</td><td>date d'échéance</td></tr>
@@ -918,13 +918,14 @@ header{
       <tr><td>ligne indentée dessous</td><td>note libre de la tâche</td></tr>
     </table>
 
-    <h4>Statut En attente (Stand by)</h4>
-    <p>Une tâche <strong>En attente</strong> est garée hors des blocs de dates.
-    Elle n'est pas comptée dans les retards ni dans le badge. Elle reste visible dans son bloc dédié.</p>
+    <h4>Les statuts</h4>
     <table>
-      <tr><td><code>- [~] Tâche bloquée 📅2026-07-01</code></td><td>standby dans le fichier .md</td></tr>
+      <tr><td><code>- [ ]</code></td><td><strong>Ouvert</strong> — apparaît dans le bloc de sa date</td></tr>
+      <tr><td><code>- [/]</code></td><td><strong>En cours</strong> — point orange, reste dans le bloc date</td></tr>
+      <tr><td><code>- [x]</code></td><td><strong>Clos</strong> — rayé, déplacé dans "Terminées"</td></tr>
+      <tr><td><code>- [~]</code></td><td><strong>En attente</strong> — sorti des blocs de dates, bloc "En attente" dédié, non compté dans retards ni badge</td></tr>
     </table>
-    <p>Dans l'app : ouvre la tâche → bouton <strong>En attente</strong> dans le panneau État.</p>
+    <p>Dans l'app : ouvre une tâche → panneau <strong>État</strong> à droite. Le statut <em>En attente</em> est idéal pour garer une tâche bloquée sans la perdre.</p>
 
     <h4>Les parents (tâches qui en regroupent d'autres)</h4>
     <p>Un parent est un dossier à suivre dans le temps. Il a un début et une fin.
@@ -937,7 +938,7 @@ header{
       <tr><td><code>^pnow-v2</code> sur une tâche</td><td>la rattache à ce parent</td></tr>
     </table>
     <p>Dans l'app, tout se fait sans taper : choisis « Parent » dans le panneau,
-    ou « Rattacher à un parent » sur une tâche. L'onglet « Parents » montre la frise.</p>
+    ou « Rattacher à un parent » sur une tâche. L'onglet « Parents » montre la frise Gantt.</p>
 
     <h4>Les récurrences</h4>
     <table>
@@ -954,9 +955,10 @@ header{
     <p>Quand tu coches une récurrence, la prochaine occurrence se cale sur le calendrier prévu.
     Pas d'empilement après une absence : une seule occurrence à la fois.</p>
 
-    <h4>Archivage</h4>
+    <h4>Archivage & sauvegarde</h4>
     <p>Les tâches terminées restent visibles 30 jours. Ensuite elles partent automatiquement
-    dans <code>archive.md</code>, dans le même dossier.</p>
+    dans <code>archive-pro.md</code> / <code>archive-perso.md</code>.<br>
+    Bouton <strong>⬇ Export</strong> dans l'en-tête : exporte tout en clair — à faire régulièrement comme sauvegarde.</p>
 
     <button class="btn-ghost close-help" id="helpClose">Fermer</button>
   </div>
