@@ -63,7 +63,7 @@ icon-512.png      — icône PWA 512×512
 ### Qualificateurs
 
 ```markdown
-- [~] Attendre réponse SFR #nego @Mehdi __ 📅2026-07-01
+- [~] Attendre réponse XXX #nego @JhonDoe __ 📅2026-07-01
        |                   |      |     |   └─ date
        |                   |      |     └─ priorité basse
        |                   |      └─ personne (@)
