@@ -548,7 +548,14 @@ body.dark .g-row:hover{background:#171A22}
   width:var(--g-label); flex:none; padding:8px 10px 8px 14px; display:flex; gap:8px; align-items:flex-start;
   border-right:1px solid var(--line);
 }
-.g-chev{flex:none; color:var(--ink3); font-size:.72rem; margin-top:4px; transition:transform .15s}
+.g-chev{
+  flex:none; transition:transform .15s; cursor:pointer;
+  font-size:.95rem; color:var(--ink2);
+  width:30px; height:30px; margin-top:0;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:8px; background:var(--line2);
+}
+.g-chev:hover, .g-chev:active{ background:var(--line); color:var(--ink) }
 .g-subj.closed .g-chev{transform:rotate(-90deg)}
 .g-subj.closed .g-children{display:none}
 .g-cb{
@@ -631,6 +638,10 @@ body.dark .g-row:hover{background:#171A22}
   #exportBtn{ display:none !important }
   /* Cacher le label ⚙ GitHub sur mobile, garder juste l'icône */
   #changeGhBtn{ font-size:.7rem; padding:0 6px; width:auto; min-width:34px }
+  /* Bouton Archives : icône seule sur mobile (libère la place pour thème + aide) */
+  #archBtn{ font-size:0; width:34px; min-width:34px; padding:0;
+    display:flex; align-items:center; justify-content:center }
+  #archBtn::after{ content:"🗄"; font-size:1.05rem }
 
   /* ws-switch compact : emoji seulement */
   .ws-switch{ padding:2px }
