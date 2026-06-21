@@ -1,15 +1,15 @@
-/* Cap. — Service Worker v10 */
-const CACHE = "cap-v2";
+/* Cap. — Service Worker v11 — réseau d'abord pour la page */
+const CACHE = "cap-v5";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
-// Installation : mettre le shell en cache
+// Installation : mettre le shell en cache + activer tout de suite
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())
   );
 });
 
-// Activation : supprimer les anciens caches
+// Activation : supprimer les anciens caches + prendre la main
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
@@ -18,14 +18,14 @@ self.addEventListener("activate", e => {
   );
 });
 
-// Fetch : GitHub API = réseau only | reste = cache first
 self.addEventListener("fetch", e => {
-  const url = e.request.url;
+  const req = e.request;
+  const url = req.url;
 
-  // GitHub API : toujours réseau, jamais mis en cache
+  // GitHub API : toujours réseau, jamais de cache
   if(url.includes("api.github.com")){
     e.respondWith(
-      fetch(e.request).catch(() =>
+      fetch(req).catch(() =>
         new Response(JSON.stringify({ error: "offline" }), {
           headers: { "Content-Type": "application/json" }
         })
@@ -34,14 +34,35 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // App shell : cache first, réseau en fallback
+  // Page / navigation (HTML) : RÉSEAU D'ABORD, cache en secours hors-ligne.
+  // C'est ce qui fait que la dernière version s'affiche dès qu'on est en ligne.
+  const accept = req.headers.get("accept") || "";
+  const isHTML = req.mode === "navigate" || accept.includes("text/html");
+  if(isHTML){
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          if(req.method === "GET" && res.status === 200){
+            const copy = res.clone();
+            caches.open(CACHE).then(c => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match(req).then(c => c || caches.match("./index.html"))
+        )
+    );
+    return;
+  }
+
+  // Autres fichiers (icônes, manifest…) : cache d'abord, réseau en secours
   e.respondWith(
-    caches.match(e.request).then(cached => {
+    caches.match(req).then(cached => {
       if(cached) return cached;
-      return fetch(e.request).then(res => {
-        // Mettre en cache uniquement les requêtes GET réussies
-        if(e.request.method === "GET" && res.status === 200){
-          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+      return fetch(req).then(res => {
+        if(req.method === "GET" && res.status === 200){
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
         }
         return res;
       });
