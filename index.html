@@ -353,6 +353,15 @@ section.zone{margin-top:26px}
   align-items:center; justify-content:center; padding:20px;
 }
 #helpModal.show{display:flex}
+#archModal{
+  display:none; position:fixed; inset:0; z-index:50; background:rgba(25,27,33,.45);
+  align-items:center; justify-content:center; padding:20px;
+}
+#archModal.show{display:flex}
+.arch-item{padding:9px 0; border-bottom:1px solid var(--line2)}
+.arch-item .arch-when{color:var(--ink3); font-size:.78rem; font-variant-numeric:tabular-nums}
+.arch-item.arch-task .arch-text{color:var(--ink2)}
+.arch-empty{color:var(--ink3); padding:14px 0}
 .help-card{
   background:var(--surface); border-radius:16px; max-width:520px; width:100%;
   max-height:85vh; overflow:auto; padding:28px; box-shadow:var(--shadow);
@@ -808,6 +817,7 @@ header{
       <div class="sync" id="sync"><div class="dot"></div><span id="syncText">Synchronisé</span></div>
       <button class="icon-btn" id="resyncBtn" title="Resynchroniser (↺)" aria-label="Resynchroniser">↺</button>
       <button class="icon-btn" id="exportBtn" title="Exporter en clair (sauvegarde)" aria-label="Exporter en clair" style="font-size:.82rem;width:auto;padding:0 10px">⬇ Export</button>
+      <button class="icon-btn" id="archBtn" title="Lire les archives" aria-label="Lire les archives" style="font-size:.82rem;width:auto;padding:0 10px">🗄 Archives</button>
       <button class="icon-btn" id="changeGhBtn" title="Reconnecter GitHub" aria-label="Reconnecter GitHub" style="font-size:.82rem;font-weight:700;width:auto;padding:0 10px">⚙ GitHub</button>
       <button class="icon-btn theme-btn" id="themeBtn" title="Thème clair / sombre" aria-label="Changer de thème"></button>
       <button class="icon-btn" id="helpBtn" title="Aide et syntaxe" aria-label="Aide">?</button>
@@ -822,6 +832,7 @@ header{
   <div class="view-switch" id="viewSwitch">
     <button data-view="tasks" class="on">Tâches <span class="sw-count" id="swTasks">0</span></button>
     <button data-view="subjects">Parents <span class="sw-count" id="swSubj">0</span></button>
+    <button data-view="delegated">Délégué <span class="sw-count" id="swDeleg">0</span></button>
   </div>
 
   <div id="badge">
@@ -889,6 +900,8 @@ header{
   </div><!-- /tasksView -->
 
   <div id="subjectsView" style="display:none"></div>
+
+  <div id="delegatedView" style="display:none"></div>
 
 </div><!-- /task-col -->
 <aside id="editPanel"></aside>
@@ -958,9 +971,33 @@ header{
     <h4>Archivage & sauvegarde</h4>
     <p>Les tâches terminées restent visibles 30 jours. Ensuite elles partent automatiquement
     dans <code>archive-pro.md</code> / <code>archive-perso.md</code>.<br>
-    Bouton <strong>⬇ Export</strong> dans l'en-tête : exporte tout en clair — à faire régulièrement comme sauvegarde.</p>
+    Bouton <strong>⬇ Export</strong> dans l'en-tête : exporte tout en clair — à faire régulièrement comme sauvegarde.<br>
+    Bouton <strong>🗄 Archives</strong> : lit les archives directement dans l'app. Déchiffrées à l'écran, sans rien télécharger.</p>
+
+    <h4>La vue Délégué</h4>
+    <p>L'onglet <strong>Délégué</strong> regroupe toutes les tâches qui citent une <code>@personne</code>.
+    Une carte par personne. C'est ta liste « sur qui j'attends quelque chose ».</p>
 
     <button class="btn-ghost close-help" id="helpClose">Fermer</button>
+  </div>
+</div>
+
+<!-- ========== Archives (lecture seule) ========== -->
+<div id="archModal">
+  <div class="help-card">
+    <h3>Archives</h3>
+    <p>Tâches terminées et rangées automatiquement. Lecture seule. Déchiffrées ici, dans ton navigateur.</p>
+    <div class="ws-switch" id="archWsSwitch" style="margin:14px 0">
+      <button class="ws-btn on" data-aws="pro">💼 Pro</button>
+      <button class="ws-btn" data-aws="perso">🏠 Perso</button>
+    </div>
+    <input id="archSearch" type="search" placeholder="Rechercher dans les archives…"
+      style="width:100%;padding:9px 12px;margin-bottom:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:.9rem">
+    <div id="archBody" style="font-size:.9rem"></div>
+    <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
+      <button class="btn-ghost" id="archExport">⬇ Exporter cette archive</button>
+      <button class="btn-ghost close-help" id="archClose">Fermer</button>
+    </div>
   </div>
 </div>
 
@@ -1715,7 +1752,8 @@ function toast(msg){
 /* ---------- État d'affichage ---------- */
 const filter={tags:new Set(), pers:new Set(), high:false, q:""};
 let editingUid=null;
-let view="tasks";                       // "tasks" | "subjects"
+let view="tasks";                       // "tasks" | "subjects" | "delegated"
+let delegStandbyOnly=false;             // vue Délégué : filtre "en attente" seulement
 let badgeDismissed=false;               // bandeau du haut masqué par l'utilisateur
 const subjSubClosed=new Set(["subjDone"]);  // sous-blocs "Parents" repliés (terminés fermé par défaut)
 const subjOpen=new Set();               // Sujets dépliés dans la vue Sujets
@@ -1748,6 +1786,7 @@ async function switchWorkspace(ws){
   // basculer
   workspace=ws;
   filter.tags.clear(); filter.pers.clear(); filter.high=false; filter.q="";
+  delegStandbyOnly=false;
   view="tasks"; badgeDismissed=false;
   closeEditPanel();
   // restaurer depuis le cache ou charger depuis le disque
@@ -2051,12 +2090,15 @@ function subjSubBlockHTML(blockId, subs){
 function render(){
   $("swTasks").textContent=model.tasks.filter(t=>t.kind!=="subject"&&!t.done).length;
   $("swSubj").textContent=allSubjects().filter(s=>!s.done).length;
+  $("swDeleg").textContent=delegatedTasks().length;
   $("tasksView").style.display = view==="tasks" ? "" : "none";
   $("subjectsView").style.display = view==="subjects" ? "" : "none";
+  $("delegatedView").style.display = view==="delegated" ? "" : "none";
   $("viewSwitch").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.view===view));
   updateBadge();
 
   if(view==="subjects"){ renderSubjects(); renderFilters(); return; }
+  if(view==="delegated"){ renderDelegated(); renderFilters(); return; }
 
   const standby=model.tasks.filter(t=>!t.done && t.kind!=="subject" && t.status==="standby" && passFilter(t))
     .sort((a,b)=>(a.date||"9999")<(b.date||"9999")?-1:1);
@@ -2113,6 +2155,54 @@ function fill(bodyId,countId,tasks,emptyMsg,subs,blockId){
   else html='<div class="empty">'+emptyMsg+'</div>';
   if(subs && subs.length) html+=subjSubBlockHTML(blockId,subs);
   $(bodyId).innerHTML=html;
+}
+
+/* ---------- Vue Délégué : tâches en attente de quelqu'un ---------- */
+// Tâches ouvertes (non parents) qui citent au moins une @personne.
+function delegatedTasks(){
+  return model.tasks.filter(t=>!t.done && t.kind!=="subject" && ownPers(t).length);
+}
+
+function renderDelegated(){
+  const box=$("delegatedView");
+  let tasks=delegatedTasks().filter(passFilter);
+  const nbStandby=tasks.filter(t=>t.status==="standby").length;
+  if(delegStandbyOnly) tasks=tasks.filter(t=>t.status==="standby");
+
+  // Regroupement par personne. Une tâche avec deux @ apparaît deux fois.
+  const byPers={};
+  tasks.forEach(t=>{
+    ownPers(t).forEach(p=>{
+      (byPers[p]=byPers[p]||[]).push(t);
+    });
+  });
+  const noms=Object.keys(byPers).sort((a,b)=>a.localeCompare(b,"fr"));
+
+  const head='<div class="subjects-bar"><h2>Délégué</h2>'
+    +'<span class="count">'+tasks.length+'</span>'
+    +'<button class="chip prio '+(delegStandbyOnly?"on":"")+'" id="delegFilterBtn" '
+    +'style="margin-left:auto">⏸ En attente'+(nbStandby?' ('+nbStandby+')':'')+'</button>'
+    +'</div>';
+
+  if(!noms.length){
+    const msg=delegStandbyOnly?"Aucune tâche en attente.":"Aucune tâche en attente de quelqu'un.";
+    box.innerHTML=head+'<div class="empty">'+msg+'</div>';
+    return;
+  }
+
+  let html=head;
+  noms.forEach(p=>{
+    const list=sortTasks(byPers[p].slice());
+    const nbRetard=list.filter(t=>t.date<TODAY).length;
+    html+='<section class="zone" id="delegZone-'+esc(p.slice(1))+'">'
+      +'<div class="zone-head"><h2>'+esc(p)+'</h2>'
+      +'<span class="count">'+list.length+'</span>'
+      +(nbRetard?'<span class="count" style="background:var(--late-soft);color:var(--late)">'+nbRetard+' en retard</span>':'')
+      +'</div>'
+      +'<div class="zone-body">'+list.map(t=>taskHTML(t)).join("")+'</div>'
+      +'</section>';
+  });
+  box.innerHTML=html;
 }
 
 /* ---------- Vue Parents : frise + arbre + groupe terminés ---------- */
@@ -2257,6 +2347,14 @@ function updateBadge(){
     const s=subs.length>1?"s":"";
     if(subs.length)
       html='<b class="today">'+subs.length+' parent'+s+' ouvert'+s+'</b>'
+        +(nLate?' · <b class="late">'+nLate+' en retard</b>':"");
+  }else if(view==="delegated"){
+    const d=delegatedTasks();
+    const noms=new Set(); d.forEach(t=>ownPers(t).forEach(p=>noms.add(p)));
+    const nLate=d.filter(t=>t.date<TODAY).length;
+    if(d.length)
+      html='<b class="today">'+d.length+' déléguée'+(d.length>1?"s":"")+'</b>'
+        +' · '+noms.size+' personne'+(noms.size>1?"s":"")
         +(nLate?' · <b class="late">'+nLate+' en retard</b>':"");
   }else{
     const cur=wsTaskStats(model.tasks);
@@ -2411,6 +2509,9 @@ document.body.addEventListener("click", async ev=>{
   // --- Bascule Tâches / Sujets ---
   const vbtn=ev.target.closest("#viewSwitch button");
   if(vbtn){ if(view!==vbtn.dataset.view){ view=vbtn.dataset.view; badgeDismissed=false; closeEditPanel(); render(); } return; }
+
+  // --- Vue Délégué : filtre "en attente" ---
+  if(ev.target.closest("#delegFilterBtn")){ delegStandbyOnly=!delegStandbyOnly; render(); return; }
 
   // --- Nouveau sujet ---
   if(ev.target.closest("#newSubjBtn")){ await createSubject(); return; }
@@ -2660,6 +2761,67 @@ document.addEventListener("click",e=>{ if(!e.target.closest(".quick")) hideAutoc
 $("helpBtn").onclick=()=>$("helpModal").classList.add("show");
 $("helpClose").onclick=()=>$("helpModal").classList.remove("show");
 $("helpModal").addEventListener("click",e=>{ if(e.target.id==="helpModal") $("helpModal").classList.remove("show"); });
+
+/* ---------- Archives (lecture seule, déchiffrées localement) ---------- */
+let archWs="pro";          // espace affiché dans la fenêtre
+let archModel={tasks:[]};  // contenu déchiffré courant
+
+async function loadArchive(ws){
+  archWs=ws;
+  document.querySelectorAll("#archWsSwitch .ws-btn").forEach(b=>{
+    b.classList.toggle("on", b.dataset.aws===ws);
+  });
+  $("archBody").innerHTML='<div class="arch-empty">Chargement…</div>';
+  if(!ghAuth.token){ $("archBody").innerHTML='<div class="arch-empty">Connecte GitHub d\'abord.</div>'; return; }
+  try{
+    const raw=await ghRead(ws,"arch");      // ghRead déchiffre déjà
+    archModel=parseFile(raw||"");
+  }catch(e){
+    $("archBody").innerHTML='<div class="arch-empty">Erreur : '+esc(e.message)+'</div>';
+    return;
+  }
+  renderArchiveList();
+}
+
+function renderArchiveList(){
+  const q=stripAccents(($("archSearch").value||"").toLowerCase());
+  let items=archModel.tasks.filter(t=>t.text || t.rawLine);
+  if(q) items=items.filter(t=>stripAccents((t.text||t.rawLine).toLowerCase()).includes(q));
+  // Plus récentes d'abord
+  items.sort((a,b)=>(b.doneDate||b.date||"")<(a.doneDate||a.date||"")?-1:1);
+  if(!items.length){ $("archBody").innerHTML='<div class="arch-empty">Rien à afficher.</div>'; return; }
+  $("archBody").innerHTML=items.map(t=>{
+    const when=t.doneDate?("fait le "+t.doneDate):(t.date?("daté "+t.date):"");
+    const body=t.text?highlight(t.text):esc(t.rawLine);
+    return '<div class="arch-item arch-task"><div class="arch-text">'+body+'</div>'
+      +(when?'<div class="arch-when">'+when+'</div>':'')+'</div>';
+  }).join("");
+}
+
+function openArchive(){
+  $("archSearch").value="";
+  $("archModal").classList.add("show");
+  loadArchive(workspace);   // ouvre sur l'espace actif
+}
+
+$("archBtn").onclick=openArchive;
+$("archClose").onclick=()=>$("archModal").classList.remove("show");
+$("archModal").addEventListener("click",e=>{ if(e.target.id==="archModal") $("archModal").classList.remove("show"); });
+$("archSearch").oninput=renderArchiveList;
+$("archWsSwitch").addEventListener("click",e=>{
+  const b=e.target.closest(".ws-btn"); if(!b) return;
+  $("archSearch").value=""; loadArchive(b.dataset.aws);
+});
+$("archExport").onclick=async()=>{
+  try{
+    const raw=await ghRead(archWs,"arch");
+    const blob=new Blob([raw||"(archive vide)"],{type:"text/plain;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="cap-archive-"+archWs+".md";
+    a.click();
+  }catch(e){ toast("Erreur export : "+e.message); }
+};
 
 
 /* ---------- Resync & reconnect GitHub ---------- */
