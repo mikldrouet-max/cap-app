@@ -180,6 +180,8 @@ header{
   color:var(--ink2); border:1px solid transparent;
 }
 .icon-btn:hover{background:var(--surface); border-color:var(--line)}
+/* Bouton Archives : icône + libellé sur ordinateur */
+#archBtn{ width:auto; padding:0 10px; gap:5px; font-size:.82rem }
 #resyncBtn{font-size:1.15rem; line-height:1}
 #resyncBtn.spinning{animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -639,9 +641,8 @@ body.dark .g-row:hover{background:#171A22}
   /* Cacher le label ⚙ GitHub sur mobile, garder juste l'icône */
   #changeGhBtn{ font-size:.7rem; padding:0 6px; width:auto; min-width:34px }
   /* Bouton Archives : icône seule sur mobile (libère la place pour thème + aide) */
-  #archBtn{ font-size:0; width:34px; min-width:34px; padding:0;
-    display:flex; align-items:center; justify-content:center }
-  #archBtn::after{ content:"🗄"; font-size:1.05rem }
+  #archBtn{ width:34px; min-width:34px; padding:0; gap:0; font-size:1.05rem }
+  #archBtn .lbl{ display:none }
 
   /* ws-switch compact : emoji seulement */
   .ws-switch{ padding:2px }
@@ -828,7 +829,7 @@ header{
       <div class="sync" id="sync"><div class="dot"></div><span id="syncText">Synchronisé</span></div>
       <button class="icon-btn" id="resyncBtn" title="Resynchroniser (↺)" aria-label="Resynchroniser">↺</button>
       <button class="icon-btn" id="exportBtn" title="Exporter en clair (sauvegarde)" aria-label="Exporter en clair" style="font-size:.82rem;width:auto;padding:0 10px">⬇ Export</button>
-      <button class="icon-btn" id="archBtn" title="Lire les archives" aria-label="Lire les archives" style="font-size:.82rem;width:auto;padding:0 10px">🗄 Archives</button>
+      <button class="icon-btn" id="archBtn" title="Lire les archives" aria-label="Lire les archives">🗄<span class="lbl">Archives</span></button>
       <button class="icon-btn" id="changeGhBtn" title="Reconnecter GitHub" aria-label="Reconnecter GitHub" style="font-size:.82rem;font-weight:700;width:auto;padding:0 10px">⚙ GitHub</button>
       <button class="icon-btn theme-btn" id="themeBtn" title="Thème clair / sombre" aria-label="Changer de thème"></button>
       <button class="icon-btn" id="helpBtn" title="Aide et syntaxe" aria-label="Aide">?</button>
