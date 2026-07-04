@@ -773,7 +773,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 
 /* ── Mobile ── */
 @media(max-width:639px){
-  :root{--tabbar-h:60px}
+  :root{--tabbar-h:52px}
   .head-in{padding:10px 14px 9px; gap:9px}
   .today-label{display:none}
   .sync span{display:none}
@@ -798,15 +798,16 @@ body.dark.perso .toast-undo{color:#7BE3D6}
   .view-switch{
     position:fixed; left:0; right:0; bottom:0; z-index:300; width:auto;
     margin:0; border-radius:0; background:var(--surface);
-    transform:translateZ(0);
-    border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));
+    transform:translateZ(0); transition:transform .22s var(--ease);
+    border-top:1px solid var(--line); padding:4px 8px calc(4px + env(safe-area-inset-bottom,0px));
     gap:4px;
   }
+  body.ep-open .view-switch, body.qa-open .view-switch{transform:translateY(110%)}
   .view-switch button{
-    flex:1; flex-direction:column; gap:2px; padding:5px 2px; border-radius:10px;
-    font-size:.66rem; font-weight:650;
+    flex:1; flex-direction:column; gap:1px; padding:3px 2px; border-radius:10px;
+    font-size:.64rem; font-weight:650;
   }
-  .view-switch button svg{width:20px; height:20px}
+  .view-switch button svg{width:18px; height:18px}
   .view-switch button.on{background:transparent; box-shadow:none; color:var(--accent)}
   .view-switch .sw-count{
     position:absolute; top:2px; right:calc(50% - 26px);
@@ -852,6 +853,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
     position:fixed; top:auto; left:0; right:0; bottom:0; height:auto; max-height:88vh;
     width:100%; border-left:none; border-radius:20px 20px 0 0; box-shadow:var(--sh-menu);
     transform:translateY(105%); transition:transform .26s var(--ease); overflow-y:auto;
+    z-index:940;
   }
   #editPanel.open{width:100%; transform:none}
   body.ep-open #epBackdrop{display:block; opacity:1}
@@ -860,9 +862,10 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 
   /* Frise Gantt : passe en pile verticale */
   .g-axis{display:none}
+  .gantt{padding-bottom:16px; overflow:visible}
   .g-row{flex-direction:column; align-items:stretch}
   .g-head{flex:none; padding:12px 12px 4px 14px}
-  .g-track{height:26px; margin:0 16px 10px 46px}
+  .g-track{height:30px; margin:0 16px 14px 46px}
   .g-bar{top:6px}
   .g-diam{top:9px}
   .g-addsub{padding-left:32px}

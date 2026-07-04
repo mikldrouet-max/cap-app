@@ -1,5 +1,5 @@
-/* Cap. — Service Worker v13 — réseau d'abord pour la page */
-const CACHE = "cap-v10";
+/* Cap. — Service Worker v14 — réseau d'abord pour la page */
+const CACHE = "cap-v11";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 // Installation : mettre le shell en cache + activer tout de suite
