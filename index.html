@@ -422,7 +422,10 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
   .task-row:hover .t-more{opacity:1}
   .t-more:hover{background:var(--line); color:var(--ink)}
 }
-@media(hover:none){ .t-more{display:none} }
+@media(hover:none){
+  .t-more{display:none}
+  .task, .g-row, .subj-row{-webkit-user-select:none; user-select:none; -webkit-touch-callout:none}
+}
 
 /* ═════════ MENU CONTEXTUEL (desktop) ═════════ */
 #ctx{
@@ -450,6 +453,15 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
 .ctx-it.danger:hover{background:var(--late-soft)}
 .ctx-it.danger svg{color:var(--late)}
 .ctx-sep{height:1px; background:var(--line2); margin:5px 8px}
+.ctx-label, .sheet-label{
+  font-size:.66rem; font-weight:750; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink3); padding:6px 12px 3px;
+}
+.sheet-tag{
+  display:inline-block; font-size:.62rem; font-weight:750; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--accent); background:var(--accent-soft);
+  border-radius:6px; padding:2px 7px; margin:0 4px 7px;
+}
 .ctx-it .sub-arrow{margin-left:auto; color:var(--ink3); font-size:.7rem}
 .ctx-it.has-sub:hover .ctx-sub{display:block}
 .ctx-sub{
@@ -780,13 +792,13 @@ body.dark.perso .toast-undo{color:#7BE3D6}
   .head-tools .icon-btn .lbl{display:inline}
   .dir-bar.show{display:none}
 
-  .task-col{padding:14px 12px calc(30px + var(--tabbar-h) + env(safe-area-inset-bottom,0px))}
+  .task-col{padding:14px 12px calc(96px + var(--tabbar-h) + env(safe-area-inset-bottom,0px))}
 
   /* Barre d'onglets basse */
   .view-switch{
     position:fixed; left:0; right:0; bottom:0; z-index:300; width:auto;
-    margin:0; border-radius:0; background:color-mix(in srgb, var(--surface) 92%, transparent);
-    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    margin:0; border-radius:0; background:var(--surface);
+    transform:translateZ(0);
     border-top:1px solid var(--line); padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));
     gap:4px;
   }
@@ -3050,6 +3062,16 @@ function toastU(msg, undoFn){
 
 /* ---------- Actions rapides ---------- */
 async function reschedule(t, iso, label){
+  if(t.kind==="subject"){
+    const prev={start:t.start, end:t.end, status:t.status, done:t.done, doneDate:t.doneDate};
+    if(t.done){ t.done=false; t.doneDate=null; t.status="open"; }
+    t.end=iso;
+    if(!t.start) t.start = TODAY<=iso ? TODAY : iso;
+    if(t.end<t.start) t.start=iso;
+    await persist();
+    toastU("Échéance → "+label, async()=>{ Object.assign(t, prev); await persist(); });
+    return;
+  }
   const prev={date:t.date, status:t.status, done:t.done, doneDate:t.doneDate};
   if(t.done){ t.done=false; t.doneDate=null; }
   if(t.status==="done") t.status="open";
@@ -3073,7 +3095,7 @@ async function quickPrio(t){
   toastU(t.prio==="h"?"Priorité haute":"Priorité normale", async()=>{ t.prio=prev; await persist(); });
 }
 async function quickDelete(t){
-  if(!confirm("Supprimer définitivement cette tâche ?")) return;
+  if(!confirm(t.kind==="subject"?"Supprimer ce parent ? Les sous-tâches ne seront pas supprimées.":"Supprimer définitivement cette tâche ?")) return;
   if(editingUid===t.uid) closeEditPanel();
   model.tasks=model.tasks.filter(x=>x!==t);
   await persist();
@@ -3088,7 +3110,7 @@ function quickEdit(t){
 /* ---------- Sélecteur de date natif ---------- */
 function openPicker(t, x, y){
   const inp=$("pickDate");
-  inp.value=t.date||TODAY;
+  inp.value=(t.kind==="subject" ? (t.end||TODAY) : t.date)||TODAY;
   inp.style.left=(x??innerWidth/2)+"px";
   inp.style.top=(y??innerHeight/2)+"px";
   inp.onchange=async()=>{
@@ -3123,12 +3145,14 @@ function ctxHTML(t){
       +'<span style="text-transform:capitalize">'+JOURS[d]+'</span>'
       +'<span class="ctx-date num">'+fromISO(iso).getDate()+'</span></button>';
   }).join("");
+  const isSubj = t.kind==="subject";
   const statusRows = t.done
     ? '<button class="ctx-it" data-cmd="reopen">'+IC.reopen+'<span>Rouvrir</span></button>'
     : '<button class="ctx-it" data-cmd="wip">'+IC.wip+'<span>'+(t.status==="wip"?"Repasser en ouvert":"Marquer en cours")+'</span></button>'
       +'<button class="ctx-it" data-cmd="standby">'+IC.standby+'<span>'+(t.status==="standby"?"Sortir de l'attente":"Mettre en attente")+'</span></button>'
-      +'<button class="ctx-it" data-cmd="prio">'+IC.prio+'<span>'+(t.prio==="h"?"Priorité normale":"Priorité haute")+'</span></button>';
-  return rows
+      +(isSubj?"":'<button class="ctx-it" data-cmd="prio">'+IC.prio+'<span>'+(t.prio==="h"?"Priorité normale":"Priorité haute")+'</span></button>');
+  return (isSubj?'<div class="ctx-label">Échéance 🏁</div>':"")
+    +rows
     +'<div class="ctx-it has-sub">'+IC.days+'<span>Jours de la semaine</span><span class="sub-arrow">▸</span>'
       +'<div class="ctx-sub">'+days+'</div></div>'
     +'<button class="ctx-it" data-cmd="pick">'+IC.pick+'<span>Choisir une date…</span></button>'
@@ -3189,14 +3213,17 @@ function sheetHTML(t){
     return '<button class="sheet-day" data-iso="'+iso+'" data-lab="'+esc(miniDate(iso))+'">'
       +'<span class="d1">'+JOURS_C[d]+'</span><span class="d2 num">'+fromISO(iso).getDate()+'</span></button>';
   }).join("");
+  const isSubj = t.kind==="subject";
   const chips = t.done ? "" :
     '<div class="sheet-chips">'
     +'<button class="sheet-chip'+(t.status==="wip"?" on-wip":"")+'" data-cmd="wip">En cours</button>'
     +'<button class="sheet-chip'+(t.status==="standby"?" on-standby":"")+'" data-cmd="standby">En attente</button>'
-    +'<button class="sheet-chip'+(t.prio==="h"?" on-prio":"")+'" data-cmd="prio">! Haute</button>'
+    +(isSubj?"":'<button class="sheet-chip'+(t.prio==="h"?" on-prio":"")+'" data-cmd="prio">! Haute</button>')
     +'</div>';
   return '<div class="sheet-handle"></div>'
+    +(isSubj?'<span class="sheet-tag">Parent</span>':"")
     +'<div class="sheet-title">'+esc(t.text||t.rawLine||"")+'</div>'
+    +(isSubj?'<div class="sheet-label">Échéance 🏁</div>':"")
     +rows
     +'<div class="sheet-days">'+days+'</div>'
     +'<button class="sheet-it" data-cmd="pick">'+IC.pick+'<span>Choisir une date…</span></button>'
@@ -3211,9 +3238,13 @@ function sheetHTML(t){
 }
 function openSheet(t){
   closeCtx();
+  try{ getSelection().removeAllRanges(); }catch(e){}
   sheetTask=t;
-  $("sheet").innerHTML=sheetHTML(t);
-  $("sheet").classList.add("show");
+  const s=$("sheet");
+  s.style.transition=""; s.style.transform="";
+  s.scrollTop=0;
+  s.innerHTML=sheetHTML(t);
+  s.classList.add("show");
   $("sheetBackdrop").classList.add("show");
 }
 function closeSheet(){
@@ -3222,6 +3253,34 @@ function closeSheet(){
   $("sheetBackdrop").classList.remove("show");
 }
 $("sheetBackdrop").addEventListener("click", closeSheet);
+
+/* Glisser la feuille vers le bas pour la fermer */
+(function(){
+  const s=$("sheet");
+  let y0=0, dy=0, drag=false;
+  s.addEventListener("touchstart", ev=>{
+    if(ev.touches.length!==1) return;
+    y0=ev.touches[0].clientY; dy=0;
+    drag = s.scrollTop<=0;
+  }, {passive:true});
+  s.addEventListener("touchmove", ev=>{
+    if(!drag) return;
+    dy=ev.touches[0].clientY-y0;
+    if(dy>0){
+      ev.preventDefault();
+      s.style.transition="none";
+      s.style.transform="translateY("+dy+"px)";
+    }
+  }, {passive:false});
+  const end=()=>{
+    if(!drag) return;
+    s.style.transition=""; s.style.transform="";
+    if(dy>90) closeSheet();
+    drag=false; dy=0;
+  };
+  s.addEventListener("touchend", end);
+  s.addEventListener("touchcancel", end);
+})();
 $("sheet").addEventListener("click", async ev=>{
   const it=ev.target.closest("[data-iso],[data-cmd]"); if(!it || !sheetTask) return;
   const t=sheetTask;
@@ -3240,11 +3299,10 @@ $("sheet").addEventListener("click", async ev=>{
 
 /* ---------- Ouverture du menu : clic droit, pastille de date, bouton ⋯ ---------- */
 function taskFromEl(el){
-  const t=findTask(+el.dataset.uid);
-  return (t && t.kind!=="subject") ? t : null;
+  return findTask(+el.dataset.uid)||null;
 }
 document.addEventListener("contextmenu", ev=>{
-  const el=ev.target.closest(".task"); if(!el) return;
+  const el=ev.target.closest(".task,.g-row,.subj-row"); if(!el) return;
   const t=taskFromEl(el); if(!t) return;
   ev.preventDefault();
   if(matchMedia("(hover:none)").matches) openSheet(t);
@@ -3282,10 +3340,10 @@ function gestureReset(){
 }
 document.addEventListener("touchstart", ev=>{
   if(ev.touches.length!==1) return;
-  const el=ev.target.closest(".task"); if(!el) return;
-  if(ev.target.closest(".cb")) return;                 // la case reste un simple tap
+  const el=ev.target.closest(".task,.g-row,.subj-row"); if(!el) return;
+  if(ev.target.closest(".cb,.g-cb,[data-addsub]")) return;   // cases et boutons restent de simples taps
   const t=taskFromEl(el); if(!t) return;
-  gTask=t; gEl=el; gRow=el.querySelector(".task-row");
+  gTask=t; gEl=el; gRow=el.querySelector(".task-row");        // null hors vue Tâches : pas de balayage
   gX=ev.touches[0].clientX; gY=ev.touches[0].clientY; gDx=0; gSwiping=false;
   suppressClick=false;
   lpTimer=setTimeout(()=>{
@@ -3302,7 +3360,7 @@ document.addEventListener("touchmove", ev=>{
   if(!gTask) return;
   const dx=ev.touches[0].clientX-gX, dy=ev.touches[0].clientY-gY;
   if(!gSwiping){
-    if(Math.abs(dx)>10 && Math.abs(dx)>Math.abs(dy)*1.3){
+    if(gRow && Math.abs(dx)>10 && Math.abs(dx)>Math.abs(dy)*1.3){
       gSwiping=true;
       clearTimeout(lpTimer); lpTimer=null;
     }else if(Math.abs(dx)>8 || Math.abs(dy)>8){
