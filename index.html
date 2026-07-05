@@ -1741,7 +1741,7 @@ async function loadAll(firstTime){
   }
   updateDirPath();
   render();
-  if(typeof importInbox==="function") importInbox(workspace).catch(()=>{});
+  if(typeof importInbox==="function") importInbox().catch(()=>{});
 }
 
 // Charge l'autre espace silencieusement pour que le switch soit immédiat
@@ -2991,7 +2991,7 @@ function initFileButtons(){
       model=parseFile(disk); lastSeenText=disk;
       rollRecurring(); render();
       toast('Tâches rechargées depuis GitHub');
-      if(typeof importInbox==="function") await importInbox(workspace).catch(()=>{});
+      if(typeof importInbox==="function") await importInbox().catch(()=>{});
     }catch(e){ toast('Erreur : '+e.message); }
     finally{ btn.classList.remove('spinning'); }
   };
@@ -3499,38 +3499,66 @@ async function inboxDelete(path, sha){
   return res.ok;
 }
 
-/* Import de la boîte de réception pour l'espace actif */
-async function importInbox(espace){
+/* Import de la boîte de réception, pour LES DEUX espaces (pro + perso) —
+   indépendant de l'espace actuellement affiché, car l'app ouvre par défaut
+   sur "pro" et une note "perso-…" ne doit pas attendre qu'on bascule dessus. */
+async function importInbox(){
   if(!ghAuth.token || inboxBusy) return 0;
-  if(espace !== workspace) return 0;               // on importe dans le modèle chargé
   inboxBusy = true;
   try{
-    const files = (await inboxList())
-      .filter(f => f.name.startsWith(espace + "-"))
-      .sort((a,b) => a.name < b.name ? -1 : 1);     // ordre chronologique (horodatage dans le nom)
+    const files = await inboxList();
     if(!files.length) return 0;
 
-    const done = [];
-    let added = 0;
-    for(const f of files){
-      const { text, sha } = await inboxGet(f.path);
-      const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l && !l.startsWith("#"));
-      const tasks = lines.map(parseInboxLine).filter(Boolean);
-      if(tasks.length){ model.tasks.push(...tasks); added += tasks.length; }
-      done.push({ path:f.path, sha });
+    const byEspace = { pro: [], perso: [] };
+    files.forEach(f => {
+      if(f.name.startsWith("pro-")) byEspace.pro.push(f);
+      else if(f.name.startsWith("perso-")) byEspace.perso.push(f);
+      // fichier au nom non reconnu : ignoré, laissé tel quel dans inbox/
+    });
+
+    let totalAdded = 0;
+    for(const espace of ["pro","perso"]){
+      const list = byEspace[espace].sort((a,b) => a.name < b.name ? -1 : 1);
+      if(!list.length) continue;
+
+      const done = [];
+      const tasksToAdd = [];
+      for(const f of list){
+        const { text, sha } = await inboxGet(f.path);
+        const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l && !l.startsWith("#"));
+        tasksToAdd.push(...lines.map(parseInboxLine).filter(Boolean));
+        done.push({ path:f.path, sha });
+      }
+
+      if(tasksToAdd.length){
+        if(espace === workspace){
+          // Espace actif : passe par le modèle en mémoire + persist() (merge/archive/chiffrement inclus)
+          model.tasks.push(...tasksToAdd);
+          await persist();
+        }else if(wsCache[espace]){
+          // Espace inactif mais déjà en cache : on l'enrichit, écrit sur GitHub sans déranger l'affichage
+          wsCache[espace].model.tasks.push(...tasksToAdd);
+          const out = serializeFile(wsCache[espace].model);
+          await ghWrite(espace, "main", out);
+          wsCache[espace].lastSeenText = out;
+        }else{
+          // Espace inactif et pas encore en cache : lecture, fusion, écriture directe
+          const disk = await ghRead(espace, "main");
+          const m = disk.trim() ? parseFile(disk) : { preamble:[disk?"":(espace==="perso"?"# Tâches Perso":"# Tâches Pro")], tasks:[] };
+          m.tasks.push(...tasksToAdd);
+          const out = serializeFile(m);
+          await ghWrite(espace, "main", out);
+        }
+        totalAdded += tasksToAdd.length;
+      }
+      for(const d of done){ try{ await inboxDelete(d.path, d.sha); }catch(e){} }
     }
 
-    if(added){
-      await persist();                              // écrit le fichier principal CHIFFRÉ, avec les nouvelles tâches
-    }
-    // Suppression des fichiers traités (best effort ; un échec = ré-import possible au prochain chargement)
-    for(const d of done){ try{ await inboxDelete(d.path, d.sha); }catch(e){} }
-
-    if(added){
-      toast(added + (added>1 ? " notes vocales importées" : " note vocale importée"));
+    if(totalAdded){
+      toast(totalAdded + (totalAdded>1 ? " notes vocales importées" : " note vocale importée"));
       render();
     }
-    return added;
+    return totalAdded;
   }catch(e){
     console.warn("Import inbox:", e.message);
     toast("Échec import note vocale — " + e.message);
