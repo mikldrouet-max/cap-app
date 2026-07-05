@@ -461,6 +461,24 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
 .ctx-it.danger:hover{background:var(--late-soft)}
 .ctx-it.danger svg{color:var(--late)}
 .ctx-sep{height:1px; background:var(--line2); margin:5px 8px}
+#badgeOptIn{
+  position:fixed; left:12px; right:12px;
+  bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px) + 14px);
+  z-index:350; display:flex; align-items:center; gap:10px;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--sh-menu); padding:11px 12px; font-size:.82rem; color:var(--ink);
+  animation:optinUp .3s var(--ease);
+}
+#badgeOptIn span{flex:1; line-height:1.35}
+#badgeOptIn #badgeOptYes{
+  background:var(--accent); color:#fff; border:none; border-radius:10px;
+  padding:8px 14px; font-size:.8rem; font-weight:700; cursor:pointer;
+}
+#badgeOptIn #badgeOptNo{
+  background:none; border:none; color:var(--ink3); font-size:1rem; cursor:pointer; padding:6px;
+}
+@keyframes optinUp{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+@media(min-width:640px){ #badgeOptIn{left:auto; right:20px; max-width:380px; bottom:20px} }
 .ctx-label, .sheet-label{
   font-size:.66rem; font-weight:750; letter-spacing:.06em; text-transform:uppercase;
   color:var(--ink3); padding:6px 12px 3px;
@@ -1072,6 +1090,8 @@ body.dark.perso .toast-undo{color:#7BE3D6}
       <tr><td><code>- ! Préparer revue 📅2026-06-20</code></td><td>haute priorité, datée</td></tr>
     </table>
     <p><strong>Capture vocale (raccourci Apple).</strong> Un raccourci dicte une note et dépose un fichier dans le dossier <code>inbox/</code> du dépôt. À la prochaine ouverture de Cap. (ou en tirant pour rafraîchir), la note devient une tâche et le fichier est supprimé. La même syntaxe fonctionne à l'oral : « point urgent relancer David lundi » → <code>! … 📅lundi</code>.</p>
+
+    <p><strong>Pastille sur l'icône (iPhone).</strong> iOS exige la permission Notifications pour afficher la pastille d'une app installée. À la première ouverture, Cap. propose de l'activer. Refusée par erreur ? Réglages › Notifications › Cap. › autoriser, avec « Pastilles » activé.</p>
 
     <h4>La syntaxe complète</h4>
     <table>
@@ -1751,6 +1771,7 @@ async function loadAll(firstTime){
   updateDirPath();
   render();
   if(typeof importInbox==="function") importInbox().catch(()=>{});
+  if(typeof showBadgeOptIn==="function") setTimeout(showBadgeOptIn, 1200);
 }
 
 // Charge l'autre espace silencieusement pour que le switch soit immédiat
@@ -1797,6 +1818,7 @@ const $=id=>document.getElementById(id);
 
 // Web App Badging API — affiche le nombre de tâches en retard + aujourd'hui
 function updateAppBadge(nLate, nToday){
+  if(typeof _lastBadge!=="undefined"){ _lastBadge.nLate=nLate; _lastBadge.nToday=nToday; }
   const count = nLate + nToday;
   if(!("setAppBadge" in navigator)) return;
   if(count > 0){
@@ -3576,6 +3598,73 @@ async function importInbox(){
     inboxBusy = false;
   }
 }
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   PASTILLE D'ICÔNE — déverrouillage iOS
+   Sur iOS (16.4+), setAppBadge ne fonctionne pour une PWA installée
+   que si la permission Notifications a été accordée, via un geste
+   utilisateur dans l'app. macOS Safari n'a pas ce verrou.
+   Ce module : (1) mémorise les derniers compteurs, (2) propose une
+   invite d'activation une seule fois, (3) rafraîchit la pastille au
+   passage en arrière-plan (la valeur persiste app fermée).
+   ═══════════════════════════════════════════════════════════════ */
+
+const _lastBadge = { nLate:0, nToday:0 };
+
+const BADGE_IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); // iPad "desktop UA"
+const BADGE_STANDALONE = matchMedia("(display-mode: standalone)").matches
+  || navigator.standalone===true;
+
+function badgeNeedsPermission(){
+  return "setAppBadge" in navigator
+      && BADGE_IS_IOS && BADGE_STANDALONE
+      && typeof Notification!=="undefined"
+      && Notification.permission==="default";
+}
+
+/* Invite d'activation — une seule fois, refus mémorisé */
+function showBadgeOptIn(){
+  if(!badgeNeedsPermission()) return;
+  if(localStorage.getItem("cap-badge-optin")==="off") return;
+  if(document.getElementById("badgeOptIn")) return;
+
+  const div=document.createElement("div");
+  div.id="badgeOptIn";
+  div.innerHTML=
+    '<span>Afficher tes tâches du jour en pastille sur l\u2019ic\u00f4ne\u00a0?</span>'
+    +'<button id="badgeOptYes">Activer</button>'
+    +'<button id="badgeOptNo" aria-label="Plus tard">\u2715</button>';
+  document.body.appendChild(div);
+
+  const dismiss=()=>{ div.remove(); localStorage.setItem("cap-badge-optin","off"); };
+
+  document.getElementById("badgeOptYes").onclick=async()=>{
+    try{
+      const p=await Notification.requestPermission();   // le geste utilisateur exigé par iOS
+      if(p==="granted"){
+        updateAppBadge(_lastBadge.nLate, _lastBadge.nToday);
+        toast("Pastille activ\u00e9e \u2713");
+      }else{
+        toast("Refus\u00e9 \u2014 activable dans R\u00e9glages \u203a Notifications \u203a Cap.");
+      }
+    }catch(e){ toast("Impossible\u00a0: "+e.message); }
+    dismiss();
+  };
+  document.getElementById("badgeOptNo").onclick=dismiss;
+}
+
+/* La pastille garde la dernière valeur posée : on la rafraîchit
+   au moment où l'app part en arrière-plan. */
+function badgeFlush(){
+  if(!("setAppBadge" in navigator)) return;
+  updateAppBadge(_lastBadge.nLate, _lastBadge.nToday);
+}
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState==="hidden") badgeFlush();
+});
+window.addEventListener("pagehide", badgeFlush);
 </script>
 <script>
 if("serviceWorker" in navigator){
