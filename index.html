@@ -461,6 +461,18 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
 .ctx-it.danger:hover{background:var(--late-soft)}
 .ctx-it.danger svg{color:var(--late)}
 .ctx-sep{height:1px; background:var(--line2); margin:5px 8px}
+#ptr{
+  position:fixed; top:calc(env(safe-area-inset-top,0px) + 8px); left:50%;
+  transform:translate(-50%,-54px); opacity:0; z-index:360;
+  width:40px; height:40px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--line); box-shadow:var(--sh-menu);
+  display:flex; align-items:center; justify-content:center; color:var(--ink3);
+  pointer-events:none;
+}
+#ptr svg{width:19px; height:19px}
+#ptr.ready{color:var(--accent); border-color:var(--accent)}
+#ptr.spin svg{animation:ptrSpin .7s linear infinite}
+@keyframes ptrSpin{to{transform:rotate(360deg)}}
 #badgeOptIn{
   position:fixed; left:12px; right:12px;
   bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px) + 14px);
@@ -963,6 +975,9 @@ body.dark.perso .toast-undo{color:#7BE3D6}
         <button class="icon-btn theme-btn" id="themeBtn" title="Thème clair / sombre" aria-label="Changer de thème">
           <svg class="ic" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg><span class="lbl">Thème</span>
         </button>
+        <button class="icon-btn" id="badgeBtn" title="Pastille sur l'icône" aria-label="Pastille sur l'icône">
+          <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="14" height="14" rx="3"/><circle cx="18.5" cy="5.5" r="3.4" fill="currentColor" stroke="none"/></svg><span class="lbl">Pastille d'icône</span>
+        </button>
         <button class="icon-btn" id="helpBtn" title="Aide et syntaxe" aria-label="Aide">
           <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1 1-1.1 1.8"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg><span class="lbl">Aide</span>
         </button>
@@ -1091,6 +1106,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
     </table>
     <p><strong>Capture vocale (raccourci Apple).</strong> Un raccourci dicte une note et dépose un fichier dans le dossier <code>inbox/</code> du dépôt. À la prochaine ouverture de Cap. (ou en tirant pour rafraîchir), la note devient une tâche et le fichier est supprimé. La même syntaxe fonctionne à l'oral : « point urgent relancer David lundi » → <code>! … 📅lundi</code>.</p>
 
+    <p><strong>Tirer pour rafraîchir.</strong> Tout en haut de la liste, tire vers le bas et relâche : Cap. recharge depuis GitHub et importe les notes vocales en attente.</p>
     <p><strong>Pastille sur l'icône (iPhone).</strong> iOS exige la permission Notifications pour afficher la pastille d'une app installée. À la première ouverture, Cap. propose de l'activer. Refusée par erreur ? Réglages › Notifications › Cap. › autoriser, avec « Pastilles » activé.</p>
 
     <h4>La syntaxe complète</h4>
@@ -3014,7 +3030,7 @@ $("archExport").onclick=async()=>{
 
 /* ---------- Resync & reconnect GitHub ---------- */
 function initFileButtons(){
-  $('resyncBtn').onclick=async()=>{
+  window.fullResync=async function(){
     if(!ghAuth.token) return;
     const btn=$('resyncBtn'); btn.classList.add('spinning');
     try{
@@ -3026,6 +3042,7 @@ function initFileButtons(){
     }catch(e){ toast('Erreur : '+e.message); }
     finally{ btn.classList.remove('spinning'); }
   };
+  $('resyncBtn').onclick=fullResync;
   $('exportBtn').onclick = exportClair;
   $('changeGhBtn').onclick=()=>{
     // Vider les champs et réouvrir la modal
@@ -3665,6 +3682,110 @@ document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState==="hidden") badgeFlush();
 });
 window.addEventListener("pagehide", badgeFlush);
+
+/* Bouton « Pastille d'icône » du menu outils : diagnostic + activation manuelle.
+   Chemin fiable quel que soit l'état (bannière ratée, permission refusée, mauvais contexte). */
+$("badgeBtn").onclick = async ()=>{
+  if(!("setAppBadge" in navigator)){
+    toast("Pastille non support\u00e9e par ce navigateur"); return;
+  }
+  if(BADGE_IS_IOS && !BADGE_STANDALONE){
+    toast("Ouvre Cap. depuis son ic\u00f4ne d'\u00e9cran d'accueil (pas Safari)"); return;
+  }
+  if(typeof Notification==="undefined"){
+    toast(BADGE_IS_IOS ? "Notifications indisponibles \u2014 iOS 16.4+ requis" : "Notifications indisponibles ici");
+    if(!BADGE_IS_IOS){ badgeFlush(); }  // macOS : pas de verrou, on pose la pastille directement
+    return;
+  }
+  if(Notification.permission==="granted"){
+    badgeFlush();
+    const n=_lastBadge.nLate+_lastBadge.nToday;
+    toast("Pastille active \u2713"+(n?" \u2014 "+n+" en ce moment":"")); return;
+  }
+  if(Notification.permission==="denied"){
+    toast("Permission refus\u00e9e \u2014 R\u00e9glages \u203a Notifications \u203a Cap. \u203a autoriser + Pastilles"); return;
+  }
+  try{
+    const p=await Notification.requestPermission();
+    if(p==="granted"){ badgeFlush(); toast("Pastille activ\u00e9e \u2713"); }
+    else{ toast("Refus\u00e9 \u2014 activable dans R\u00e9glages \u203a Notifications \u203a Cap."); }
+  }catch(e){ toast("Impossible\u00a0: "+e.message); }
+  localStorage.setItem("cap-badge-optin","off");  // la bannière n'est plus utile
+};
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   TIRER POUR RAFRAÎCHIR — depuis le haut de page, tirer vers le
+   bas puis relâcher déclenche fullResync() (rechargement GitHub
+   + import des notes vocales). Indicateur : flèche qui pivote
+   avec le tirage, spinner pendant le rafraîchissement.
+   Garde-fous : inactif si une feuille/panneau est ouvert, si le
+   scroll n'est pas à 0, ou si le geste est surtout horizontal
+   (balayages de tâches préservés).
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  const THRESH = 64;         // distance (après résistance) qui arme le rafraîchissement
+  const RESIST = 0.5;
+
+  const el=document.createElement("div");
+  el.id="ptr";
+  el.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13"/><path d="m6 11 6 6 6-6"/></svg>';
+  document.body.appendChild(el);
+
+  let sy=0, sx=0, dist=0, pulling=false, refreshing=false, canceled=false;
+
+  function blocked(){
+    const auth=$("authModal");
+    return document.body.classList.contains("ep-open")
+        || document.body.classList.contains("qa-open")
+        || $("sheet").classList.contains("show")
+        || $("ctx").classList.contains("show")
+        || (auth && auth.style.display!=="none" && auth.style.display!=="");
+  }
+  const atTop=()=> (window.scrollY||document.documentElement.scrollTop||0) <= 0;
+
+  function reset(){
+    el.classList.remove("ready","spin");
+    el.style.transition="transform .25s var(--ease), opacity .2s";
+    el.style.transform="translate(-50%,-54px)";
+    el.style.opacity="0";
+    pulling=false; dist=0;
+  }
+
+  document.addEventListener("touchstart", ev=>{
+    if(refreshing || ev.touches.length!==1 || blocked() || !atTop()) return;
+    sy=ev.touches[0].clientY; sx=ev.touches[0].clientX;
+    dist=0; pulling=true; canceled=false;
+    el.style.transition="none";
+  }, {passive:true});
+
+  document.addEventListener("touchmove", ev=>{
+    if(!pulling || refreshing || canceled) return;
+    const dy=ev.touches[0].clientY-sy, dx=ev.touches[0].clientX-sx;
+    if(Math.abs(dx)>Math.abs(dy)+8){ canceled=true; reset(); return; }  // geste horizontal : balayage de tâche
+    if(dy<=0 || !atTop()){ if(dist>0) reset(); return; }
+    ev.preventDefault();                     // bloque le rebond natif pendant le tirage
+    dist=Math.min(dy*RESIST, 100);
+    el.style.opacity=String(Math.min(dist/34,1));
+    el.style.transform="translate(-50%,"+(dist-54)+"px) rotate("+Math.min(dist/THRESH,1)*180+"deg)";
+    el.classList.toggle("ready", dist>=THRESH);
+  }, {passive:false});
+
+  async function endPull(){
+    if(!pulling || refreshing) return;
+    if(dist>=THRESH && typeof fullResync==="function" && ghAuth.token){
+      refreshing=true;
+      el.classList.add("spin");
+      el.style.transition="transform .2s var(--ease)";
+      el.style.transform="translate(-50%,"+(THRESH-54)+"px)";
+      try{ await fullResync(); }catch(e){}
+      refreshing=false;
+    }
+    reset();
+  }
+  document.addEventListener("touchend", endPull);
+  document.addEventListener("touchcancel", ()=>{ reset(); });
+})();
 </script>
 <script>
 if("serviceWorker" in navigator){
