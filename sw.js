@@ -1,6 +1,6 @@
-/* Cap. — Service Worker v17 — réseau d'abord pour la page */
-const CACHE = "cap-v14";
-const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
+/* Cap. — Service Worker v18 — réseau d'abord pour la page */
+const CACHE = "cap-v15";
+const SHELL = ["./", "./index.html", "./manifest.json", "./favicon.svg", "./icon-192.png", "./icon-512.png"];
 
 // Installation : mettre le shell en cache + activer tout de suite
 self.addEventListener("install", e => {

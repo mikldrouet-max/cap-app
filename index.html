@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<title>Cap — mes tâches</title>
+<title>Cap. — Gestion de tâches</title>
 <style>
 /* ═════════════════════════════════════════════════════════
    CAP. v2 — design system
@@ -99,9 +99,15 @@ body::before{
   box-shadow:var(--sh-2); max-width:420px; width:100%; padding:34px 30px 28px;
 }
 .auth-card .logo{
+  display:flex; align-items:center; justify-content:center; gap:12px;
   font-family:var(--font-disp); font-size:2.1rem; font-weight:800; letter-spacing:-.035em;
 }
-.auth-card .logo span{color:var(--accent)}
+.auth-card .logo .brand-mark{width:40px; height:40px; color:var(--accent)}
+.auth-card .logo .logo-word span{color:var(--accent)}
+.auth-card .logo-tag{
+  text-align:center; font-size:.8rem; font-weight:650; color:var(--ink3);
+  letter-spacing:.02em; margin:6px 0 0;
+}
 .auth-card p{font-size:.9rem; color:var(--ink2); margin:8px 0 22px; line-height:1.55}
 .auth-card label{
   display:block; font-size:.72rem; font-weight:700; letter-spacing:.07em;
@@ -134,10 +140,12 @@ header{
 }
 .head-in{padding:12px 20px 10px; display:flex; align-items:center; gap:12px}
 .brand{
+  display:flex; align-items:center; gap:7px;
   font-family:var(--font-disp); font-size:1.3rem; font-weight:800; letter-spacing:-.03em;
   line-height:1;
 }
-.brand span{color:var(--accent)}
+.brand .brand-mark{width:21px; height:21px; color:var(--accent); flex:none}
+.brand .brand-word span{color:var(--accent)}
 .today-label{color:var(--ink3); font-size:.84rem; text-transform:capitalize; white-space:nowrap}
 .head-right{margin-left:auto; display:flex; align-items:center; gap:8px; position:relative}
 
@@ -891,7 +899,8 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 <!-- ========== Connexion GitHub ========== -->
 <div id="authModal">
   <div class="auth-card">
-    <div class="logo">Cap<span>.</span></div>
+    <div class="logo"><svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true"><circle cx="22" cy="78" r="9" fill="currentColor"/><g transform="translate(58 42) rotate(45) scale(.62) translate(-50 -50)"><path d="M50 8 L82 84 L50 66 L18 84 Z" fill="currentColor"/></g></svg><span class="logo-word">Cap<span>.</span></span></div>
+    <p class="logo-tag">Le point. Le cap. C'est fait.</p>
     <p>Tes tâches vivent dans ton dépôt GitHub privé, chiffrées de bout en bout. Rien ne sort de ton navigateur en clair.</p>
     <label for="ghRepoInput">Dépôt de données</label>
     <input type="text" id="ghRepoInput" placeholder="cap-data" value="cap-data" autocomplete="off">
@@ -909,7 +918,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 <div id="app" style="display:none">
 <header>
   <div class="head-in">
-    <div class="brand">Cap<span>.</span></div>
+    <div class="brand"><svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true"><circle cx="22" cy="78" r="9" fill="currentColor"/><g transform="translate(58 42) rotate(45) scale(.62) translate(-50 -50)"><path d="M50 8 L82 84 L50 66 L18 84 Z" fill="currentColor"/></g></svg><span class="brand-word">Cap<span>.</span></span></div>
     <div class="ws-switch" id="wsSwitch">
       <button class="ws-btn on" data-ws="pro">Pro</button>
       <button class="ws-btn" data-ws="perso">Perso</button>

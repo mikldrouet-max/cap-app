@@ -1,7 +1,7 @@
 {
-  "name": "Cap.",
+  "name": "Cap. — Gestion de tâches",
   "short_name": "Cap.",
-  "description": "Gestion de tâches Pro & Perso",
+  "description": "Le point. Le cap. C'est fait. Tâches Pro & Perso, chiffrées dans votre GitHub.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
