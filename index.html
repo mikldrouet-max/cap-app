@@ -33,6 +33,8 @@
   --low:#A2A6B2;
   --tag:#6B5CA5; --tag-soft:#F1EEF9;
   --pk:#0F6E8C;  --pk-soft:#E7F3F7;
+  --dash-pro:#3D4FD8; --dash-perso:#0E7E76; --dash-late:#C43A22; --dash-today:#B96A00;
+  --dash-done:#177A4C; --dash-soon:#6B5CA5; --dash-later:#8E93A0;
   --line:#E4E2D9; --line2:#EFEDE5;
   --r:12px; --rs:9px;
   --sh-1:0 1px 2px rgba(20,22,30,.05), 0 6px 20px -12px rgba(20,22,30,.14);
@@ -57,6 +59,8 @@ body.dark{
   --low:#5D6270;
   --tag:#B3A4E8; --tag-soft:#272138;
   --pk:#6EC0DC;  --pk-soft:#0F2A33;
+  --dash-pro:#8C98FF; --dash-perso:#43C2B4; --dash-late:#F0776040; --dash-late:#EF7A5E;
+  --dash-today:#E0A040; --dash-done:#5BC98A; --dash-soon:#A99BE0; --dash-later:#6E7482;
   --line:#262B37; --line2:#1D212C;
   --sh-1:0 1px 2px rgba(0,0,0,.35), 0 8px 24px -14px rgba(0,0,0,.6);
   --sh-2:0 2px 8px rgba(0,0,0,.4), 0 20px 50px -18px rgba(0,0,0,.7);
@@ -461,6 +465,38 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
 .ctx-it.danger:hover{background:var(--late-soft)}
 .ctx-it.danger svg{color:var(--late)}
 .ctx-sep{height:1px; background:var(--line2); margin:5px 8px}
+/* ── Dashboard (Stats) ── */
+.dash{display:flex; flex-direction:column; gap:16px; padding-bottom:24px}
+.dash-kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:10px}
+.kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:14px 12px; box-shadow:var(--sh-1); text-align:center}
+.kpi-v{font-family:var(--font-disp); font-size:1.7rem; font-weight:800; line-height:1; letter-spacing:-.02em; color:var(--ink); font-variant-numeric:tabular-nums}
+.kpi-l{font-size:.72rem; font-weight:650; color:var(--ink3); margin-top:5px}
+.kpi.bad .kpi-v{color:var(--dash-late)} .kpi.warn .kpi-v{color:var(--dash-today)} .kpi.good .kpi-v{color:var(--dash-done)}
+.dash-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--sh-1); padding:16px 16px 18px}
+.dash-card>header{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; gap:8px}
+.dash-card h3{font-family:var(--font-disp); font-size:1.02rem; font-weight:750; letter-spacing:-.01em; margin:0; color:var(--ink)}
+.dash-card>header span{font-size:.74rem; color:var(--ink3); font-weight:600}
+.dash-svg{width:100%; height:auto; display:block}
+.dash-donut-wrap{display:flex; align-items:center; gap:20px; flex-wrap:wrap}
+.dash-donut{width:120px; height:120px; flex:none}
+.dash-legend{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.78rem; color:var(--ink2); margin-top:10px}
+.dash-legend span{display:inline-flex; align-items:center; gap:6px}
+.dash-legend i{width:10px; height:10px; border-radius:3px; flex:none}
+.dash-two{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+.dash-sub{font-size:.8rem; font-weight:750; margin-bottom:9px}
+.dash-hbars{display:flex; flex-direction:column; gap:8px}
+.dash-hb{display:grid; grid-template-columns:66px 1fr 26px; align-items:center; gap:8px; font-size:.78rem}
+.dash-hb-lbl{color:var(--ink2)}
+.dash-hb-track{height:9px; background:var(--line2); border-radius:5px; overflow:hidden}
+.dash-hb-fill{display:block; height:100%; border-radius:5px; min-width:2px; transition:width .5s var(--ease)}
+.dash-hb-val{text-align:right; font-weight:700; color:var(--ink2); font-variant-numeric:tabular-nums}
+.dash-empty{color:var(--ink3); font-size:.8rem; padding:8px 0}
+.dash-note{background:var(--accent-soft); color:var(--ink2); border-radius:var(--rs); padding:9px 12px; font-size:.8rem}
+.dash-note-sm{color:var(--ink3); font-size:.72rem; margin-top:9px; line-height:1.4}
+@media(max-width:639px){
+  .dash-kpis{grid-template-columns:repeat(3,1fr)}
+  .dash-two{grid-template-columns:1fr; gap:16px}
+}
 #ptr{
   position:fixed; top:calc(env(safe-area-inset-top,0px) + 8px); left:50%;
   transform:translate(-50%,-54px); opacity:0; z-index:360;
@@ -1003,6 +1039,10 @@ body.dark.perso .toast-undo{color:#7BE3D6}
       <svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 8.5l2 2 3.5-3.5"/></svg>
       <span class="sw-lbl">Délégué</span> <span class="sw-count" id="swDeleg">0</span>
     </button>
+    <button data-view="dashboard">
+      <svg class="ic" viewBox="0 0 24 24"><path d="M4 13h6v7H4zM14 4h6v16h-6zM4 4h6v5H4z"/></svg>
+      <span class="sw-lbl">Stats</span> <span class="sw-count" id="swDash">·</span>
+    </button>
   </div>
 
   <div id="badge">
@@ -1073,6 +1113,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 
   <div id="subjectsView" style="display:none"></div>
   <div id="delegatedView" style="display:none"></div>
+  <div id="dashboardView" style="display:none"></div>
 
 </div><!-- /task-col -->
 <div id="epBackdrop"></div>
@@ -1358,7 +1399,7 @@ let nextUid=1;
 function newTask(){
   return { uid:nextUid++, kind:"task", done:false, status:"open", text:"", date:null, doneDate:null,
            prio:"n", rec:null, note:"", raw:false, rawLine:"",
-           start:null, end:null, anchor:null };
+           start:null, end:null, anchor:null, created:null };
 }
 
 const RX = {
@@ -1366,6 +1407,7 @@ const RX = {
   date: /\s*📅\s*(\d{4}-\d{2}-\d{2})/,
   endDate: /\s*🏁\s*(\d{4}-\d{2}-\d{2})/,   // date de fin d'un Sujet
   doneDate: /\s*✅\s*(\d{4}-\d{2}-\d{2})/,
+  created: /\s*➕\s*(\d{4}-\d{2}-\d{2})/,
   rec: /\s*(?:🔁|r:)\s*(\S+)/,           // 🔁 ou r:
   subj: /(^|\s)=(?=\s|$)/,               // = en tête = Sujet (tâche parent)
   anchor: /(^|\s)\^([\p{L}\p{N}_-]+)/u,  // ^etiquette = lien vers un Sujet
@@ -1407,6 +1449,7 @@ function parseFile(text){
       if(mm=body.match(RX.endDate)){ t.end=mm[1]; body=body.replace(RX.endDate,""); }
       if(mm=body.match(RX.date)){ t.date=mm[1]; body=body.replace(RX.date,""); }
       if(mm=body.match(RX.doneDate)){ t.doneDate=mm[1]; body=body.replace(RX.doneDate,""); }
+      if(mm=body.match(RX.created)){ t.created=mm[1]; body=body.replace(RX.created,""); }
       if(mm=body.match(RX.anchor)){ t.anchor=mm[2]; body=body.replace(RX.anchor," "); }
       if(t.kind!=="subject" && (mm=body.match(RX.rec))){ t.rec=parseRec(mm[1]); body=body.replace(RX.rec,""); }
       if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
@@ -1454,6 +1497,7 @@ function serializeTask(t){
     if(t.rec) l+=" r:"+t.rec.spec;
   }
   if(t.done && t.doneDate) l+=" ✅"+t.doneDate;
+  if(t.created) l+=" ➕"+t.created;
   if(t.note) l += "\n" + t.note.split("\n").map(n=>"    "+n).join("\n");
   return l;
 }
@@ -1700,20 +1744,33 @@ async function idbSet(k,v){
 
 async function readMain(){ return ghRead(workspace, "main"); }
 
-async function writeFile(name, text){
-  const type = (name === FILE_ARCH()) ? "arch" : "main";
-  await ghWrite(workspace, type, text);
+async function writeFile(type, text, ws){
+  await ghWrite(ws || workspace, type, text);
 }
 
-async function appendArchive(lines){
+async function appendArchive(lines, ws){
   if(!lines.length) return;
-  let old = await ghRead(workspace, "arch");
-  if(!old.trim()) old = workspace==="perso" ? "# Archive Perso\n" : "# Archive\n";
-  await ghWrite(workspace, "arch", old.replace(/\n*$/,"\n") + lines.join("\n") + "\n");
+  ws = ws || workspace;
+  let old = await ghRead(ws, "arch");
+  if(!old.trim()) old = ws==="perso" ? "# Archive Perso\n" : "# Archive\n";
+  await ghWrite(ws, "arch", old.replace(/\n*$/,"\n") + lines.join("\n") + "\n");
 }
 
-async function mergeExternal(){
-  const disk = await ghRead(workspace, "main");
+// Retire les tâches strictement identiques (même ligne sérialisée) — auto-répare
+// un doublonnage physique déjà présent dans un fichier. Renvoie le nombre retiré.
+function dedupModel(m){
+  const seen=new Set(); const kept=[]; let removed=0;
+  for(const t of m.tasks){
+    const key=serializeTask(t);
+    if(seen.has(key)){ removed++; continue; }
+    seen.add(key); kept.push(t);
+  }
+  if(removed) m.tasks=kept;
+  return removed;
+}
+
+async function mergeExternal(ws){
+  const disk = await ghRead(ws || workspace, "main");
   if(lastSeenText !== null && disk !== lastSeenText){
     const baseSet=new Set((lastSeenText||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean));
     const ours=new Set(model.tasks.map(t=>serializeTask(t).split("\n")[0].trim()));
@@ -1731,18 +1788,19 @@ async function mergeExternal(){
 let saveTimer=null;
 async function persist(){
   setSync("saving");
+  const ws = model.ws || workspace;              // l'espace AUQUEL ce modèle appartient
   try{
-    await mergeExternal();
+    await mergeExternal(ws);
     const cutoff=addDays(TODAY,-ARCH_DAYS);
     const toArch=model.tasks.filter(t=>t.done && t.doneDate && t.doneDate<cutoff);
     if(toArch.length){
-      await appendArchive(toArch.map(serializeTask));
+      await appendArchive(toArch.map(serializeTask), ws);
       model.tasks=model.tasks.filter(t=>!toArch.includes(t));
     }
     const out=serializeFile(model);
-    await writeFile(FILE_MAIN(),out);
+    await writeFile("main", out, ws);            // écrit dans SON fichier, pas celui du global
     lastSeenText=out;
-    await idbSet("cap_last_"+workspace, out).catch(()=>{});
+    await idbSet("cap_last_"+ws, out).catch(()=>{});
     setSync("ok");
   }catch(e){
     console.error(e); setSync("error");
@@ -1762,12 +1820,14 @@ async function loadAll(firstTime){
   const text = await ghRead(workspace, "main");
   if(!text.trim()){
     const pre=workspace==="perso"?"# Tâches Perso":"# Tâches Pro";
-    model={preamble:[pre],tasks:[]};
+    model={preamble:[pre],tasks:[],ws:workspace};
     const out=serializeFile(model);
     await ghWrite(workspace, "main", out);
     lastSeenText=out;
   }else{
-    model=parseFile(text); lastSeenText=text;
+    model=parseFile(text); model.ws=workspace; lastSeenText=text;
+    const nd=dedupModel(model);
+    if(nd){ lastSeenText=serializeFile(model); toast(nd+" doublon(s) nettoyé(s)"); }
   }
   rollRecurring();
   if(firstTime){
@@ -1779,6 +1839,7 @@ async function loadAll(firstTime){
       otherP.then(txt => {
         if(txt !== null && !wsCache[other]){ // seulement si aucun loadAll(false) n'a déjà rempli le cache
           const m = txt.trim() ? parseFile(txt) : {preamble:[], tasks:[]};
+          m.ws = other; dedupModel(m);
           wsCache[other] = { model: m, lastSeenText: txt };
         }
       });
@@ -1797,6 +1858,7 @@ async function preloadOtherWorkspace(){
   try{
     const text = await ghRead(other, "main");
     const m = text.trim() ? parseFile(text) : {preamble:[], tasks:[]};
+    m.ws = other; dedupModel(m);
     wsCache[other] = { model: m, lastSeenText: text };
   }catch(e){ /* silencieux — l'espace sera chargé à la demande */ }
 }
@@ -1994,7 +2056,7 @@ async function switchWorkspace(ws){
   }else if(ghAuth.token){
     await loadAll(false);
   }else{
-    model={preamble:[],tasks:[]}; lastSeenText=null;
+    model={preamble:[],tasks:[],ws:workspace}; lastSeenText=null;
     render();
   }
   updateWsUI();
@@ -2299,11 +2361,14 @@ function render(){
   $("tasksView").style.display = view==="tasks" ? "" : "none";
   $("subjectsView").style.display = view==="subjects" ? "" : "none";
   $("delegatedView").style.display = view==="delegated" ? "" : "none";
+  $("dashboardView").style.display = view==="dashboard" ? "" : "none";
   $("viewSwitch").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.view===view));
   updateBadge();
 
   if(view==="subjects"){ renderSubjects(); renderFilters(); return; }
   if(view==="delegated"){ renderDelegated(); renderFilters(); return; }
+  if(view==="dashboard"){ $("filters").style.display="none"; if(typeof renderDashboard==="function") renderDashboard(); return; }
+  $("filters").style.display="";
 
   const standby=model.tasks.filter(t=>!t.done && t.kind!=="subject" && t.status==="standby" && passFilter(t))
     .sort((a,b)=>(a.date||"9999")<(b.date||"9999")?-1:1);
@@ -2836,6 +2901,22 @@ function parseDateNLP(text, baseISO){
     if(m){ date=iso; cleaned=cleaned.replace(rx," "); }
   };
 
+  // Construit une date à partir d'un quantième + mois optionnel, projetée dans le futur.
+  const buildDMY=(day, moName, base)=>{
+    let mo = moName ? MOIS_MAP[stripAccents(moName.toLowerCase())] : null;
+    const b=fromISO(base); let yr=b.getFullYear();
+    if(mo===null || mo===undefined){
+      // pas de mois : ce mois-ci, sinon le mois suivant si déjà passé
+      mo=b.getMonth();
+      let cand=new Date(yr,mo,day);
+      if(cand < b){ mo=b.getMonth()+1; cand=new Date(yr,mo,day); }
+      return toISO(cand);
+    }
+    let cand=new Date(yr,mo,day);
+    if(cand < b) cand=new Date(yr+1,mo,day);   // mois déjà passé cette année → année suivante
+    return toISO(cand);
+  };
+
   replace(/(^|\s)aujourd['']?hui(\s|$)/i, baseISO);
   replace(/(^|\s)demain(\s|$)/i, addDays(baseISO,1));
   replace(/(^|\s)apr[eè]s[-\s]?demain(\s|$)/i, addDays(baseISO,2));
@@ -2843,9 +2924,67 @@ function parseDateNLP(text, baseISO){
   replace(/(^|\s)le mois prochain(\s|$)/i, (()=>{
     const d=fromISO(baseISO); return toISO(new Date(d.getFullYear(), d.getMonth()+1, 1));})()
   );
+
+  // ── "jeudi dans 2 semaines", "jeudi dans 3 jours" (jour + délai) ──
+  if(!date){
+    const m=stripAccents(cleaned.toLowerCase())
+      .match(/(^|\s)(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+dans\s+(\d+)\s+(jour|jours|semaine|semaines)(\s|$)/);
+    if(m){
+      const dayNum=JOURS_MAP[m[2]];
+      const n=+m[3];
+      const off = m[4].startsWith("semaine") ? n*7 : n;
+      const anchor=addDays(baseISO, off);
+      const d=fromISO(anchor);
+      const diff=(dayNum-d.getDay()+7)%7;               // ce jour-là, à partir de l'ancre
+      date=addDays(anchor, diff);
+      cleaned=cleaned.replace(new RegExp(m[0].trim().replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i")," ");
+    }
+  }
+
+  // ── délais génériques "dans N jours/semaines/mois" ──
   replace(/(^|\s)dans (\d+) jours?(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) jours?/i); return m2?addDays(baseISO,+m2[1]):null;})());
   replace(/(^|\s)dans (\d+) semaines?(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) semaines?/i); return m2?addDays(baseISO,7*+m2[1]):null;})());
-  replace(/(^|\s)dans (\d+) mois(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) mois/i); if(!m2) return null; const d=fromISO(baseISO); return toISO(new Date(d.getFullYear(), d.getMonth()+m2[1],d.getDate()));})());
+  replace(/(^|\s)dans (\d+) mois(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) mois/i); if(!m2) return null; const d=fromISO(baseISO); return toISO(new Date(d.getFullYear(), d.getMonth()+ +m2[1],d.getDate()));})());
+
+  // ── "jeudi 23/06", "jeudi 23/06/2026" (jour + quantième + mois NUMÉRIQUE, séparateur obligatoire) ──
+  if(!date){
+    const m=stripAccents(cleaned.toLowerCase())
+      .match(/(^|\s)(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+(\d{1,2})[\/.](\d{1,2})(?:[\/.](\d{2,4}))?(\s|$)/);
+    if(m){
+      const day=+m[3], mo=+m[4]-1;
+      const b=fromISO(baseISO);
+      let yr = m[5]!==undefined ? (m[5].length===2 ? 2000+ +m[5] : +m[5]) : null;
+      let cand;
+      if(yr===null){ cand=new Date(b.getFullYear(),mo,day); if(cand<b) cand=new Date(b.getFullYear()+1,mo,day); }
+      else cand=new Date(yr,mo,day);
+      date=toISO(cand);
+      cleaned=cleaned.replace(new RegExp(m[0].trim().replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i")," ");
+    }
+  }
+
+  // ── "jeudi 23 juin", "jeudi 23" (jour + quantième + mois en toutes lettres optionnel) ──
+  if(!date){
+    const m=stripAccents(cleaned.toLowerCase())
+      .match(/(^|\s)(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+(\d{1,2})(?:\s+(janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre))?(\s|$)/);
+    if(m){
+      date=buildDMY(+m[3], m[4]||null, baseISO);
+      cleaned=cleaned.replace(new RegExp(m[0].trim().replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"i")," ");
+    }
+  }
+
+  // ── "23/06", "23/06/2026", "23.06" (quantième numérique seul) ──
+  if(!date){
+    const m=cleaned.match(/(^|\s)(\d{1,2})[\/.](\d{1,2})(?:[\/.](\d{2,4}))?(\s|$)/);
+    if(m){
+      const day=+m[2], mo=+m[3]-1;
+      const b=fromISO(baseISO);
+      let yr = m[4]!==undefined ? (m[4].length===2 ? 2000+ +m[4] : +m[4]) : b.getFullYear();
+      let cand=new Date(yr,mo,day);
+      if(m[4]===undefined && cand<b) cand=new Date(yr+1,mo,day);
+      date=toISO(cand);
+      cleaned=cleaned.replace(m[0]," ");
+    }
+  }
 
   // "le 15" ou "le 15 juin"
   const domM=cleaned.match(/(^|\s)le (\d{1,2})(?:\s+(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre))?(\s|$)/i);
@@ -2860,7 +2999,7 @@ function parseDateNLP(text, baseISO){
     date=toISO(cand); cleaned=cleaned.replace(domM[0]," ");
   }
 
-  // "lundi", "prochain lundi", "lundi prochain"
+  // "lundi", "prochain lundi", "lundi prochain" (jour seul, en dernier recours)
   const dayK=Object.keys(JOURS_MAP);
   for(const k of dayK){
     const rx=new RegExp('(^|\\s)(prochain\\s+)?'+k+'(\\s+prochain)?(\\s|$)','i');
@@ -2893,6 +3032,7 @@ function parseQuick(raw){
   const nlp=parseDateNLP(body, $("quickDate").value||TODAY);
   if(nlp.date && !t.date){ t.date=nlp.date; body=nlp.cleaned; }
   t.text=body.replace(/\s+/g," ").trim();
+  t.created=TODAY;
   if(!t.date) t.date=$("quickDate").value||TODAY;
   if(t.kind==="subject"){
     t.start=t.date; if(!t.end) t.end=addDays(t.start,14); t.date=t.start;
@@ -3505,6 +3645,7 @@ function parseInboxLine(raw){
   const nlp = parseDateNLP(body, TODAY);
   if(nlp.date && !t.date){ t.date=nlp.date; body=nlp.cleaned; }
   t.text = body.replace(/\s+/g," ").trim();
+  t.created = TODAY;
   if(!t.date) t.date = TODAY;
   if(t.kind==="subject"){
     t.start=t.date; if(!t.end) t.end=addDays(t.start,14); t.date=t.start;
@@ -3593,6 +3734,7 @@ async function importInbox(){
           // Espace inactif et pas encore en cache : lecture, fusion, écriture directe
           const disk = await ghRead(espace, "main");
           const m = disk.trim() ? parseFile(disk) : { preamble:[disk?"":(espace==="perso"?"# Tâches Perso":"# Tâches Pro")], tasks:[] };
+          m.ws = espace;
           m.tasks.push(...tasksToAdd);
           const out = serializeFile(m);
           await ghWrite(espace, "main", out);
@@ -3786,6 +3928,250 @@ $("badgeBtn").onclick = async ()=>{
   document.addEventListener("touchend", endPull);
   document.addEventListener("touchcancel", ()=>{ reset(); });
 })();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD (Stats) — lecture seule.
+   Croise l'espace actif (model) et l'autre (wsCache), charge ce
+   dernier au besoin. Graphiques SVG faits main, sans dépendance.
+   Note : « créées » n'existe que pour les tâches datées ➕ (suivi
+   démarré à l'ajout du champ) — les tâches antérieures en sont
+   exclues, une note l'indique.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Récupère { pro:[tasks], perso:[tasks] } depuis model + wsCache.
+   Charge l'espace manquant en arrière-plan puis re-render. */
+let _dashLoading=false;
+function dashCollect(){
+  const out={pro:[], perso:[]};
+  out[workspace] = model.tasks;
+  const other = workspace==="pro" ? "perso" : "pro";
+  if(wsCache[other]) out[other] = wsCache[other].model.tasks;
+  else out[other] = null;    // pas encore chargé
+  return out;
+}
+async function dashEnsureOther(){
+  const other = workspace==="pro" ? "perso" : "pro";
+  if(wsCache[other] || _dashLoading || !ghAuth.token) return;
+  _dashLoading=true;
+  try{
+    const txt = await ghRead(other, "main");
+    const m = txt.trim() ? parseFile(txt) : {preamble:[], tasks:[]};
+    m.ws = other; if(typeof dedupModel==="function") dedupModel(m);
+    wsCache[other] = { model:m, lastSeenText:txt };
+    if(view==="dashboard") renderDashboard();
+  }catch(e){ /* silencieux : on affiche l'espace actif seul */ }
+  finally{ _dashLoading=false; }
+}
+
+/* ---------- Helpers de calcul ---------- */
+function dashStats(tasks){
+  if(!tasks) return null;
+  const real = tasks.filter(t=>t.kind!=="subject");
+  const open = real.filter(t=>!t.done);
+  return {
+    total: real.length,
+    open: open.length,
+    done: real.filter(t=>t.done).length,
+    late: open.filter(t=>t.status!=="standby" && t.date<TODAY).length,
+    today: open.filter(t=>t.status!=="standby" && t.date===TODAY).length,
+    wip: open.filter(t=>t.status==="wip").length,
+    standby: open.filter(t=>t.status==="standby").length,
+    hi: open.filter(t=>t.prio==="h").length,
+    subjects: tasks.filter(t=>t.kind==="subject" && !t.done).length
+  };
+}
+// Séries hebdo (N dernières semaines) : clôtures (doneDate) et créations (created)
+function dashWeeklySeries(tasks, nWeeks){
+  const weeks=[];
+  const monday = (()=>{ const d=fromISO(TODAY); const dow=(d.getDay()+6)%7; return addDays(TODAY,-dow); })();
+  for(let i=nWeeks-1;i>=0;i--){
+    const start=addDays(monday,-7*i);
+    weeks.push({start, end:addDays(start,6), label:frDate(start).replace(/^\w+\.?\s*/,""), done:0, created:0});
+  }
+  const inWk=(iso,w)=> iso>=w.start && iso<=w.end;
+  (tasks||[]).filter(t=>t.kind!=="subject").forEach(t=>{
+    if(t.done && t.doneDate){ const w=weeks.find(w=>inWk(t.doneDate,w)); if(w) w.done++; }
+    if(t.created){ const w=weeks.find(w=>inWk(t.created,w)); if(w) w.created++; }
+  });
+  return weeks;
+}
+
+/* ---------- Primitives SVG ---------- */
+const DASH_C = { pro:"var(--dash-pro)", perso:"var(--dash-perso)", late:"var(--dash-late)",
+                 today:"var(--dash-today)", done:"var(--dash-done)", muted:"var(--ink3)" };
+
+function svgBarsGrouped(weeks, key, colorA, labelA){
+  const W=520,H=170, padL=28, padB=26, padT=10;
+  const max=Math.max(1,...weeks.map(w=>w[key]));
+  const bw=(W-padL-8)/weeks.length;
+  let bars="", labels="", grid="";
+  for(let g=0; g<=2; g++){
+    const val=Math.round(max*g/2), y=padT+(H-padT-padB)*(1-g/2);
+    grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+W+'" y2="'+y+'" stroke="var(--line2)" stroke-width="1"/>'
+         +'<text x="'+(padL-5)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="var(--ink3)">'+val+'</text>';
+  }
+  weeks.forEach((w,i)=>{
+    const v=w[key], h=(H-padT-padB)*(v/max);
+    const x=padL+i*bw+bw*0.18, y=padT+(H-padT-padB)-h, wd=bw*0.64;
+    bars+='<rect x="'+x+'" y="'+y+'" width="'+wd+'" height="'+Math.max(h,v?2:0)+'" rx="3" fill="'+colorA+'"><title>'+labelA+' — sem. '+w.label+' : '+v+'</title></rect>';
+    if(v) bars+='<text x="'+(x+wd/2)+'" y="'+(y-3)+'" text-anchor="middle" font-size="9" font-weight="700" fill="var(--ink2)">'+v+'</text>';
+    labels+='<text x="'+(padL+i*bw+bw/2)+'" y="'+(H-padB+13)+'" text-anchor="middle" font-size="8.5" fill="var(--ink3)">'+w.label+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="dash-svg" preserveAspectRatio="xMidYMid meet">'+grid+bars+labels+'</svg>';
+}
+
+function svgStackedWeekly(weeksPro, weeksPer, key){
+  const W=520,H=180, padL=28, padB=26, padT=12;
+  const n=weeksPro.length;
+  const totals=weeksPro.map((w,i)=>w[key]+(weeksPer[i]?weeksPer[i][key]:0));
+  const max=Math.max(1,...totals);
+  const bw=(W-padL-8)/n;
+  let bars="", labels="", grid="";
+  for(let g=0; g<=2; g++){
+    const val=Math.round(max*g/2), y=padT+(H-padT-padB)*(1-g/2);
+    grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+W+'" y2="'+y+'" stroke="var(--line2)" stroke-width="1"/>'
+         +'<text x="'+(padL-5)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" fill="var(--ink3)">'+val+'</text>';
+  }
+  weeksPro.forEach((w,i)=>{
+    const vp=w[key], vq=weeksPer[i]?weeksPer[i][key]:0;
+    const hp=(H-padT-padB)*(vp/max), hq=(H-padT-padB)*(vq/max);
+    const x=padL+i*bw+bw*0.18, wd=bw*0.64, base=padT+(H-padT-padB);
+    const yp=base-hp;
+    bars+='<rect x="'+x+'" y="'+yp+'" width="'+wd+'" height="'+Math.max(hp,vp?2:0)+'" rx="2" fill="'+DASH_C.pro+'"><title>Pro — sem. '+w.label+' : '+vp+'</title></rect>';
+    const yq=yp-hq;
+    bars+='<rect x="'+x+'" y="'+yq+'" width="'+wd+'" height="'+Math.max(hq,vq?2:0)+'" rx="2" fill="'+DASH_C.perso+'"><title>Perso — sem. '+w.label+' : '+vq+'</title></rect>';
+    const tot=vp+vq;
+    if(tot) bars+='<text x="'+(x+wd/2)+'" y="'+(yq-3)+'" text-anchor="middle" font-size="9" font-weight="700" fill="var(--ink2)">'+tot+'</text>';
+    labels+='<text x="'+(padL+i*bw+bw/2)+'" y="'+(H-padB+13)+'" text-anchor="middle" font-size="8.5" fill="var(--ink3)">'+w.label+'</text>';
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="dash-svg" preserveAspectRatio="xMidYMid meet">'+grid+bars+labels+'</svg>';
+}
+
+function svgDonut(segments){ // segments: [{v,color,label}]
+  const total=segments.reduce((s,x)=>s+x.v,0)||1;
+  const R=52, r=32, cx=60, cy=60; let a0=-Math.PI/2, paths="";
+  segments.forEach(seg=>{
+    if(!seg.v) return;
+    const a1=a0+2*Math.PI*seg.v/total;
+    const large=(a1-a0)>Math.PI?1:0;
+    const x0=cx+R*Math.cos(a0), y0=cy+R*Math.sin(a0), x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1);
+    const xi0=cx+r*Math.cos(a1), yi0=cy+r*Math.sin(a1), xi1=cx+r*Math.cos(a0), yi1=cy+r*Math.sin(a0);
+    paths+='<path d="M'+x0+' '+y0+' A'+R+' '+R+' 0 '+large+' 1 '+x1+' '+y1+' L'+xi0+' '+yi0+' A'+r+' '+r+' 0 '+large+' 0 '+xi1+' '+yi1+' Z" fill="'+seg.color+'"><title>'+seg.label+' : '+seg.v+'</title></path>';
+    a0=a1;
+  });
+  return '<svg viewBox="0 0 120 120" class="dash-donut">'+paths
+    +'<text x="60" y="57" text-anchor="middle" font-size="21" font-weight="800" fill="var(--ink)">'+total+'</text>'
+    +'<text x="60" y="72" text-anchor="middle" font-size="9" fill="var(--ink3)">ouvertes</text></svg>';
+}
+
+function svgHBars(rows){ // rows:[{label,v,color}]
+  const max=Math.max(1,...rows.map(r=>r.v));
+  return '<div class="dash-hbars">'+rows.map(r=>
+    '<div class="dash-hb"><span class="dash-hb-lbl">'+r.label+'</span>'
+    +'<span class="dash-hb-track"><span class="dash-hb-fill" style="width:'+(r.v/max*100)+'%;background:'+r.color+'"></span></span>'
+    +'<span class="dash-hb-val">'+r.v+'</span></div>').join("")+'</div>';
+}
+
+/* ---------- Rendu ---------- */
+function dashKpi(label, val, cls){
+  return '<div class="kpi '+(cls||"")+'"><div class="kpi-v">'+val+'</div><div class="kpi-l">'+label+'</div></div>';
+}
+function dashCard(title, sub, body){
+  return '<section class="dash-card"><header><h3>'+title+'</h3>'+(sub?'<span>'+sub+'</span>':'')+'</header>'+body+'</section>';
+}
+function dashLegend(items){ // [{color,label}]
+  return '<div class="dash-legend">'+items.map(i=>'<span><i style="background:'+i.color+'"></i>'+i.label+'</span>').join("")+'</div>';
+}
+
+function renderDashboard(){
+  dashEnsureOther();
+  const data=dashCollect();
+  const sPro=dashStats(data.pro), sPer=dashStats(data.perso);
+  const both=(a,b,k)=> (a?a[k]:0)+(b?b[k]:0);
+  const wkPro=dashWeeklySeries(data.pro,8), wkPer=dashWeeklySeries(data.perso,8);
+  const otherLoaded = !!(sPro && sPer);
+
+  // KPIs globaux
+  const kOpen=both(sPro,sPer,"open"), kLate=both(sPro,sPer,"late"),
+        kToday=both(sPro,sPer,"today"), kDone=both(sPro,sPer,"done"),
+        kTot=both(sPro,sPer,"total");
+  const rate = kTot ? Math.round(both(sPro,sPer,"done")/kTot*100) : 0;
+
+  let html='<div class="dash">';
+  html+='<div class="dash-kpis">'
+      + dashKpi("Ouvertes", kOpen)
+      + dashKpi("En retard", kLate, kLate?"bad":"")
+      + dashKpi("Aujourd\u2019hui", kToday, "warn")
+      + dashKpi("Terminées", kDone, "good")
+      + dashKpi("Complétion", rate+"%")
+      + '</div>';
+
+  if(!otherLoaded){
+    html+='<div class="dash-note">Chargement de l\u2019espace '
+      +(workspace==="pro"?"Perso":"Pro")+'\u2026 les comparaisons Pro/Perso s\u2019afficheront ensuite.</div>';
+  }
+
+  // Répartition ouvertes par échéance (donut) + par espace
+  const bucket = t => t.status==="standby" ? "standby"
+                    : t.date<TODAY ? "late" : t.date===TODAY ? "today"
+                    : t.date<=addDays(TODAY,7) ? "soon" : "later";
+  const allOpen=[...(data.pro||[]),...(data.perso||[])].filter(t=>t.kind!=="subject" && !t.done);
+  const b={late:0,today:0,soon:0,later:0,standby:0};
+  allOpen.forEach(t=>b[bucket(t)]++);
+  const donut=svgDonut([
+    {v:b.late,color:DASH_C.late,label:"En retard"},
+    {v:b.today,color:DASH_C.today,label:"Aujourd\u2019hui"},
+    {v:b.soon,color:"var(--dash-soon)",label:"Sous 7 j"},
+    {v:b.later,color:"var(--dash-later)",label:"Plus tard"},
+    {v:b.standby,color:DASH_C.muted,label:"En attente"}
+  ]);
+  html+=dashCard("Tâches ouvertes","par échéance",
+    '<div class="dash-donut-wrap">'+donut
+    +dashLegend([
+      {color:DASH_C.late,label:"En retard ("+b.late+")"},
+      {color:DASH_C.today,label:"Aujourd\u2019hui ("+b.today+")"},
+      {color:"var(--dash-soon)",label:"Sous 7 j ("+b.soon+")"},
+      {color:"var(--dash-later)",label:"Plus tard ("+b.later+")"},
+      {color:DASH_C.muted,label:"En attente ("+b.standby+")"}
+    ])+'</div>');
+
+  // Pro vs Perso — barres horizontales par indicateur
+  html+=dashCard("Pro vs Perso","état actuel",
+    '<div class="dash-two">'
+    +'<div><div class="dash-sub" style="color:'+DASH_C.pro+'">Pro</div>'
+      +svgHBars([
+        {label:"Ouvertes",v:sPro?sPro.open:0,color:DASH_C.pro},
+        {label:"En retard",v:sPro?sPro.late:0,color:DASH_C.late},
+        {label:"Terminées",v:sPro?sPro.done:0,color:DASH_C.done},
+        {label:"Parents",v:sPro?sPro.subjects:0,color:"var(--dash-later)"}
+      ])+'</div>'
+    +'<div><div class="dash-sub" style="color:'+DASH_C.perso+'">Perso</div>'
+      +(sPer?svgHBars([
+        {label:"Ouvertes",v:sPer.open,color:DASH_C.perso},
+        {label:"En retard",v:sPer.late,color:DASH_C.late},
+        {label:"Terminées",v:sPer.done,color:DASH_C.done},
+        {label:"Parents",v:sPer.subjects,color:"var(--dash-later)"}
+      ]):'<div class="dash-empty">\u2026</div>')+'</div>'
+    +'</div>');
+
+  // Clôtures par semaine (empilé Pro/Perso)
+  const totalDone8=wkPro.reduce((s,w)=>s+w.done,0)+wkPer.reduce((s,w)=>s+w.done,0);
+  html+=dashCard("Tâches terminées","8 dernières semaines",
+    svgStackedWeekly(wkPro,wkPer,"done")
+    +dashLegend([{color:DASH_C.pro,label:"Pro"},{color:DASH_C.perso,label:"Perso"}])
+    +(totalDone8?'':'<div class="dash-empty">Aucune clôture datée sur la période.</div>'));
+
+  // Créations par semaine (empilé) — dépend du suivi ➕
+  const totalCreated8=wkPro.reduce((s,w)=>s+w.created,0)+wkPer.reduce((s,w)=>s+w.created,0);
+  html+=dashCard("Tâches créées","8 dernières semaines",
+    svgStackedWeekly(wkPro,wkPer,"created")
+    +dashLegend([{color:DASH_C.pro,label:"Pro"},{color:DASH_C.perso,label:"Perso"}])
+    +'<div class="dash-note-sm">Suivi des créations démarré récemment : les tâches plus anciennes n\u2019y figurent pas.</div>');
+
+  html+='</div>';
+  $("dashboardView").innerHTML=html;
+}
 </script>
 <script>
 if("serviceWorker" in navigator){
