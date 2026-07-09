@@ -465,6 +465,14 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
 .ctx-it.danger:hover{background:var(--late-soft)}
 .ctx-it.danger svg{color:var(--late)}
 .ctx-sep{height:1px; background:var(--line2); margin:5px 8px}
+.rec-days{display:flex; gap:5px; flex-wrap:wrap}
+.rec-day{
+  flex:1; min-width:38px; padding:8px 4px; border-radius:9px; cursor:pointer;
+  background:var(--surface2); border:1px solid var(--line); color:var(--ink2);
+  font-size:.78rem; font-weight:650; text-transform:capitalize; transition:all .12s var(--ease);
+}
+.rec-day:hover{border-color:var(--accent-line)}
+.rec-day.on{background:var(--accent); border-color:var(--accent); color:#fff}
 /* ── Dashboard (Stats) ── */
 .dash{display:flex; flex-direction:column; gap:16px; padding-bottom:24px}
 .dash-kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:10px}
@@ -1283,7 +1291,8 @@ function relDate(iso, today){
 function stripAccents(s){ return s.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
 
 /* ---------- Récurrences ---------- */
-const DAYNUM = {dimanche:0,lundi:1,mardi:2,mercredi:3,jeudi:4,vendredi:5,samedi:6};
+const DAYNUM = {dimanche:0,lundi:1,mardi:2,mercredi:3,jeudi:4,vendredi:5,samedi:6,
+  dim:0,lun:1,mar:2,mer:3,jeu:4,ven:5,sam:6};
 
 function parseRec(spec){
   if(!spec) return null;
@@ -1294,6 +1303,14 @@ function parseRec(spec){
   if(/^(semaine|hebdo)$/.test(s)) return {type:"weeks", n:1, spec};
   if(m=s.match(/^(\d+)s$/)) return {type:"weeks", n:+m[1], spec};
   if(s in DAYNUM) return {type:"weekday", n:1, day:DAYNUM[s], spec};
+  // Récurrence hebdo multi-jours : "lun,jeu" / "lun+jeu" / "2s-lun,jeu,sam"
+  if(m=s.match(/^(?:(\d+)s-)?([a-z]+(?:[,+][a-z]+)+)$/)){
+    const parts=m[2].split(/[,+]/).filter(p=>p in DAYNUM);
+    if(parts.length>=2){
+      const days=[...new Set(parts.map(p=>DAYNUM[p]))].sort((a,b)=>a-b);
+      return {type:"weekdays", n:+(m[1]||1), days, spec};
+    }
+  }
   if(m=s.match(/^(\d+)s-([a-z]+)$/)){
     if(m[2] in DAYNUM) return {type:"weekday", n:+m[1], day:DAYNUM[m[2]], spec};
   }
@@ -1318,6 +1335,10 @@ function recLabel(rec){
     case "days": return rec.n===1 ? "chaque jour" : "tous les "+rec.n+" jours";
     case "weeks": return rec.n===1 ? "chaque semaine" : "toutes les "+rec.n+" sem.";
     case "weekday": return rec.n===1 ? "chaque "+J[rec.day] : "un "+J[rec.day]+" sur "+rec.n;
+    case "weekdays": {
+      const noms=rec.days.map(d=>JOURS_C[d].replace(".","")).join(", ");
+      return (rec.n===1?"chaque sem. : ":"1 sem./"+rec.n+" : ")+noms;
+    }
     case "months": return rec.n===1 ? "chaque mois" : "tous les "+rec.n+" mois";
     case "dom": return rec.d===-1 ? "dernier jour du mois" : "le "+rec.d+" du mois";
     case "nthweekday": return (rec.nth===-1?"dernier ":rec.nth===1?"1er ":rec.nth+"e ")+J[rec.day]+" du mois";
@@ -1357,6 +1378,20 @@ function nextOccurrence(rec, anchorISO, afterISO){
       if(shift) d=addDays(d, shift);                 // aligner sur le bon jour
       while(d<=afterISO && guard++<2000) d=addDays(d, 7*rec.n);
       return d;
+    }
+    case "weekdays": {
+      // semaine d'ancrage = celle (lundi) de l'ancre ; on saute de rec.n semaines
+      const dow=x=>(fromISO(x).getDay()+6)%7;                 // 0=lundi
+      let wkStart=addDays(anchorISO, -dow(anchorISO));        // lundi de la semaine d'ancre
+      for(let k=0; k<5000 && guard++<5000; k++){
+        const base=addDays(wkStart, 7*rec.n*k);
+        for(const wd of rec.days){                           // wd : 0=dim..6=sam
+          const offset=(wd+6)%7;                             // position depuis lundi
+          const cand=addDays(base, offset);
+          if(cand>afterISO) return cand;
+        }
+      }
+      return afterISO;
     }
     case "months": {
       const dayWanted=fromISO(anchorISO).getDate();
@@ -2066,8 +2101,8 @@ async function switchWorkspace(ws){
 function esc(s){ return s.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function highlight(text){
   return esc(text)
-    .replace(RX.tag, m=>'<span class="tk">'+m+'</span>')
-    .replace(RX.pers, m=>'<span class="pk">'+m+'</span>');
+    .replace(RX.tag, m=>'<span class="tk">'+m.slice(1)+'</span>')
+    .replace(RX.pers, m=>'<span class="pk">'+m.slice(1)+'</span>');
 }
 function ownTags(t){ return (t.text.match(RX.tag)||[]); }
 function ownPers(t){ return (t.text.match(RX.pers)||[]); }
@@ -2207,6 +2242,7 @@ function openEditPanel(t){
             opt("days","Tous les N jours",type==="days")+
             opt("weeks","Toutes les N semaines",type==="weeks")+
             opt("weekday","N sem. — jour fixe",type==="weekday")+
+            opt("weekdays","Hebdo — jours au choix",type==="weekdays")+
             opt("months","Tous les N mois",type==="months")+
             opt("dom","Le N du mois",type==="dom"&&r&&r.d!==-1)+
             opt("domlast","Dernier jour du mois",type==="dom"&&r&&r.d===-1)+
@@ -2229,6 +2265,14 @@ function openEditPanel(t){
           '<select class="ep-input" id="edRecDay">'+
             [1,2,3,4,5,6,0].map(d=>opt(String(d),JOURS[d],r&&r.day===d)).join("")+
           '</select>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ep-field" id="wrapRecDays" style="display:none">'+
+        '<label class="ep-label">Jours de la semaine</label>'+
+        '<div class="rec-days" id="edRecDays">'+
+          [1,2,3,4,5,6,0].map(d=>
+            '<button type="button" class="rec-day'+(r&&r.type==="weekdays"&&r.days&&r.days.includes(d)?" on":"")+'" data-d="'+d+'">'+JOURS_C[d].replace(".","")+'</button>'
+          ).join("")+
         '</div>'+
       '</div>'+
       // --- Sujet : étiquette (identifiant) ---
@@ -2685,6 +2729,17 @@ function readRecFromEdit(){
     case "days": spec=n===1?"jour":n+"j"; break;
     case "weeks": spec=n===1?"semaine":n+"s"; break;
     case "weekday": spec=(n===1?"":n+"s-")+J[day]; break;
+    case "weekdays": {
+      const days=[...document.querySelectorAll("#edRecDays .rec-day.on")].map(b=>+b.dataset.d);
+      if(days.length>=2){
+        const abbr={0:"dim",1:"lun",2:"mar",3:"mer",4:"jeu",5:"ven",6:"sam"};
+        const list=days.sort((a,b)=>a-b).map(d=>abbr[d]).join(",");
+        spec=(n===1?"":n+"s-")+list;
+      }else if(days.length===1){
+        spec=(n===1?"":n+"s-")+J[days[0]];   // un seul jour → weekday classique
+      }
+      break;
+    }
     case "months": spec=n===1?"mois":n+"m"; break;
     case "dom": spec="le-"+Math.min(n,31); break;
     case "domlast": spec="dernier-jour"; break;
@@ -2697,9 +2752,22 @@ function syncRecInputs(){
   const type=$("edRecType")?.value;
   if(!type) return;
   const show=(id,v)=>{ const el=$(id); if(el) el.style.display=v?"":"none"; };
-  show("wrapRecN",  ["days","weeks","weekday","months","dom"].includes(type));
+  show("wrapRecN",  ["days","weeks","weekday","weekdays","months","dom"].includes(type));
   show("wrapRecDay",["weekday","nthweekday"].includes(type));
   show("wrapRecNth",type==="nthweekday");
+  show("wrapRecDays",type==="weekdays");
+  if(type==="weekdays"){
+    const lbl=$("wrapRecN")?.querySelector(".ep-label");
+    if(lbl) lbl.textContent="Sem.";
+  }
+  const box=$("edRecDays");
+  if(box && !box._wired){
+    box._wired=true;
+    box.addEventListener("click",ev=>{
+      const b=ev.target.closest(".rec-day"); if(!b) return;
+      b.classList.toggle("on");
+    });
+  }
 }
 
 async function saveEdit(t){
@@ -2944,6 +3012,7 @@ function parseDateNLP(text, baseISO){
   // ── délais génériques "dans N jours/semaines/mois" ──
   replace(/(^|\s)dans (\d+) jours?(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) jours?/i); return m2?addDays(baseISO,+m2[1]):null;})());
   replace(/(^|\s)dans (\d+) semaines?(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) semaines?/i); return m2?addDays(baseISO,7*+m2[1]):null;})());
+  replace(/(^|\s)dans (\d+) sem\.?(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) sem/i); return m2?addDays(baseISO,7*+m2[1]):null;})());
   replace(/(^|\s)dans (\d+) mois(\s|$)/i, (()=>{const m2=cleaned.match(/dans (\d+) mois/i); if(!m2) return null; const d=fromISO(baseISO); return toISO(new Date(d.getFullYear(), d.getMonth()+ +m2[1],d.getDate()));})());
 
   // ── "jeudi 23/06", "jeudi 23/06/2026" (jour + quantième + mois NUMÉRIQUE, séparateur obligatoire) ──
@@ -3029,7 +3098,7 @@ function parseQuick(raw){
   if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
   else if(RX.lo.test(body)){ t.prio="b"; body=body.replace(RX.lo," "); }
   // détection dates naturelles dans le texte
-  const nlp=parseDateNLP(body, $("quickDate").value||TODAY);
+  const nlp=parseDateNLP(body, TODAY);
   if(nlp.date && !t.date){ t.date=nlp.date; body=nlp.cleaned; }
   t.text=body.replace(/\s+/g," ").trim();
   t.created=TODAY;
