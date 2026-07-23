@@ -1821,9 +1821,33 @@ async function mergeExternal(ws){
 }
 
 let saveTimer=null;
+// Sauvegarde locale de secours avant chaque écriture — permet une restauration
+// manuelle si une corruption survient malgré les gardes (voir restoreLastBackup()).
+async function backupBeforeWrite(ws, text){
+  try{ await idbSet("cap_backup_"+ws, {text, ts:Date.now()}); }catch(e){}
+}
+// Restauration manuelle depuis la console : restoreLastBackup("pro") ou ("perso")
+window.restoreLastBackup=async function(ws){
+  const b=await idbGet("cap_backup_"+ws).catch(()=>null);
+  if(!b){ alert("Aucune sauvegarde locale pour "+ws); return; }
+  if(!confirm("Restaurer "+ws+" depuis la sauvegarde du "+new Date(b.ts).toLocaleString()+" ? Ceci écrase le fichier GitHub actuel.")) return;
+  await ghRead(ws,"main"); // rafraîchit le sha avant écriture
+  await ghWrite(ws,"main",b.text);
+  alert("Restauré. Rechargez l'app pour voir l'état restauré.");
+};
 async function persist(){
   setSync("saving");
-  const ws = model.ws || workspace;              // l'espace AUQUEL ce modèle appartient
+  const targetWs = workspace;                    // espace actif au moment de l'appel
+  const ws = model.ws || targetWs;                // espace AUQUEL ce modèle appartient
+  if(model.ws && model.ws !== targetWs){
+    // Incohérence détectée entre le modèle en mémoire et l'espace actif : on refuse
+    // d'écrire pour ne jamais dupliquer/écraser le mauvais fichier (garde anti-corruption).
+    console.error("[GUARD] persist() annulé : model.ws="+model.ws+" workspace="+targetWs);
+    setSync("error");
+    toast("Sécurité : écriture annulée (incohérence détectée). Relancez l'action.");
+    render();
+    return;
+  }
   try{
     await mergeExternal(ws);
     const cutoff=addDays(TODAY,-ARCH_DAYS);
@@ -1833,6 +1857,7 @@ async function persist(){
       model.tasks=model.tasks.filter(t=>!toArch.includes(t));
     }
     const out=serializeFile(model);
+    await backupBeforeWrite(ws, lastSeenText);   // snapshot de l'ancien contenu avant écrasement
     await writeFile("main", out, ws);            // écrit dans SON fichier, pas celui du global
     lastSeenText=out;
     await idbSet("cap_last_"+ws, out).catch(()=>{});
@@ -1844,23 +1869,33 @@ async function persist(){
   render();
 }
 
+let wsBusy=false;   // verrou anti-double-bascule : évite la race qui a causé la duplication pro/perso
 async function loadAll(firstTime){
+  const wsAtStart = workspace;   // capture locale : évite d'écrire dans le mauvais
+                                 // espace si l'utilisateur bascule pendant ce await
+  if(firstTime) wsBusy=true;    // bloque tout tap Pro/Perso pendant le tout premier chargement
   // Lancer le fetch de l'autre espace EN PARALLÈLE dès le début (bascule instantanée)
   let otherP = null;
   if(firstTime){
-    const other = workspace === "pro" ? "perso" : "pro";
+    const other = wsAtStart === "pro" ? "perso" : "pro";
     if(!wsCache[other]) otherP = ghRead(other, "main").catch(()=>null);
   }
 
-  const text = await ghRead(workspace, "main");
+  const text = await ghRead(wsAtStart, "main");
+  if(workspace !== wsAtStart){
+    // L'utilisateur a changé d'espace pendant le chargement : on abandonne
+    // silencieusement, switchWorkspace/loadAll(false) a déjà repris la main.
+    if(firstTime) wsBusy=false;
+    return;
+  }
   if(!text.trim()){
-    const pre=workspace==="perso"?"# Tâches Perso":"# Tâches Pro";
-    model={preamble:[pre],tasks:[],ws:workspace};
+    const pre=wsAtStart==="perso"?"# Tâches Perso":"# Tâches Pro";
+    model={preamble:[pre],tasks:[],ws:wsAtStart};
     const out=serializeFile(model);
-    await ghWrite(workspace, "main", out);
+    await ghWrite(wsAtStart, "main", out);
     lastSeenText=out;
   }else{
-    model=parseFile(text); model.ws=workspace; lastSeenText=text;
+    model=parseFile(text); model.ws=wsAtStart; lastSeenText=text;
     const nd=dedupModel(model);
     if(nd){ lastSeenText=serializeFile(model); toast(nd+" doublon(s) nettoyé(s)"); }
   }
@@ -1882,6 +1917,7 @@ async function loadAll(firstTime){
   }
   updateDirPath();
   render();
+  if(firstTime) wsBusy=false;   // le tout premier chargement est terminé, bascule autorisée
   if(typeof importInbox==="function") importInbox().catch(()=>{});
   if(typeof showBadgeOptIn==="function") setTimeout(showBadgeOptIn, 1200);
 }
@@ -2022,7 +2058,7 @@ window.addEventListener("focus", async()=>{
     const disk=await readMain();
     if(workspace !== wsAtStart) return; // workspace a changé pendant le fetch → abort
     if(disk!==lastSeenText){
-      model=parseFile(disk); lastSeenText=disk;
+      model=parseFile(disk); model.ws=wsAtStart; lastSeenText=disk;
       rollRecurring(); render();
       toast("Tâches rechargées (modifiées ailleurs)");
     }
@@ -2070,6 +2106,9 @@ function updateWsUI(){
 
 async function switchWorkspace(ws){
   if(ws===workspace) return;
+  if(wsBusy){ toast("Chargement en cours, patientez…"); return; }
+  wsBusy=true;
+  try{
   // sauvegarder l'état courant
   // Persister seulement si quelque chose a changé
   if(ghAuth.token && serializeFile(model) !== lastSeenText){
@@ -2096,6 +2135,7 @@ async function switchWorkspace(ws){
   }
   updateWsUI();
   toast("Espace "+(ws==="perso"?"Perso 🏠":"Pro 💼")+" activé");
+  }finally{ wsBusy=false; }
 }
 
 function esc(s){ return s.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -2417,10 +2457,14 @@ function render(){
   const standby=model.tasks.filter(t=>!t.done && t.kind!=="subject" && t.status==="standby" && passFilter(t))
     .sort((a,b)=>(a.date||"9999")<(b.date||"9999")?-1:1);
   const open=model.tasks.filter(t=>!t.done && t.kind!=="subject" && t.status!=="standby" && passFilter(t));
+  // Tâches en attente déjà en retard ou dues aujourd'hui : affichées EN PLUS dans
+  // ces blocs (avec leur icône ⏸), tout en restant listées dans "En attente".
+  const standbyLate  = standby.filter(t=>t.date && t.date<TODAY);
+  const standbyToday = standby.filter(t=>t.date===TODAY);
   const TOMORROW=addDays(TODAY,1);
   const horizon=addDays(TODAY,7);
-  const late=sortTasks(open.filter(t=>t.date<TODAY));
-  const today=sortTasks(open.filter(t=>t.date===TODAY));
+  const late=sortTasks([...open.filter(t=>t.date<TODAY), ...standbyLate]);
+  const today=sortTasks([...open.filter(t=>t.date===TODAY), ...standbyToday]);
   const tomorrow=sortTasks(open.filter(t=>t.date===TOMORROW));
   const soon=sortTasks(open.filter(t=>t.date>TOMORROW && t.date<=horizon));
   const later=sortTasks(open.filter(t=>t.date>horizon));
@@ -3241,10 +3285,12 @@ $("archExport").onclick=async()=>{
 function initFileButtons(){
   window.fullResync=async function(){
     if(!ghAuth.token) return;
+    const wsAtStart = workspace;   // capture : évite d'écrire dans le mauvais espace
     const btn=$('resyncBtn'); btn.classList.add('spinning');
     try{
       const disk=await readMain();
-      model=parseFile(disk); lastSeenText=disk;
+      if(workspace !== wsAtStart){ btn.classList.remove('spinning'); return; } // espace changé pendant le fetch
+      model=parseFile(disk); model.ws=wsAtStart; lastSeenText=disk;
       rollRecurring(); render();
       toast('Tâches rechargées depuis GitHub');
       if(typeof importInbox==="function") await importInbox().catch(()=>{});
