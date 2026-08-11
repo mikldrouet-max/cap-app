@@ -977,14 +977,14 @@ body.dark.perso .toast-undo{color:#7BE3D6}
     <p class="logo-tag">Le point. Le cap. C'est fait.</p>
     <p>Tes tâches vivent dans ton dépôt GitHub privé, chiffrées de bout en bout. Rien ne sort de ton navigateur en clair.</p>
     <label for="ghRepoInput">Dépôt de données</label>
-    <input type="text" id="ghRepoInput" placeholder="cap-data" value="cap-data" autocomplete="off">
+    <input type="text" id="ghRepoInput" placeholder="cap-data ou compte/cap-data-perso" value="cap-data" autocomplete="off">
     <label for="ghTokenInput">Jeton GitHub fine-grained</label>
     <input type="password" id="ghTokenInput" placeholder="github_pat_…" autocomplete="off">
     <label for="ghPassInput">Phrase secrète de chiffrement</label>
     <input type="password" id="ghPassInput" placeholder="••••••••" autocomplete="off">
     <button id="ghAuthBtn">Se connecter</button>
     <div id="ghAuthStatus"></div>
-    <p class="auth-hint">GitHub → Settings → Developer settings → Fine-grained tokens → droit Contents Read/Write sur le dépôt.</p>
+    <p class="auth-hint">GitHub → Settings → Developer settings → Fine-grained tokens → droit Contents Read/Write sur le dépôt. Dépôt sous ton propre compte : tape juste son nom. Dépôt d'un autre compte : tape "compte/nom-du-dépôt".</p>
   </div>
 </div>
 
@@ -1135,7 +1135,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 <div id="helpModal">
   <div class="help-card">
     <h3>Comment ça marche</h3>
-    <p>Tout est stocké dans <code>pro.md</code> et <code>perso.md</code>, dans ton dépôt GitHub privé <code>cap-data</code>. Les fichiers sont chiffrés AES-256-GCM — seule ta phrase secrète les déchiffre.</p>
+    <p>Tout est stocké dans <code>pro.md</code> et <code>perso.md</code>, dans ton dépôt GitHub privé. Les fichiers sont chiffrés AES-256-GCM — seule ta phrase secrète les déchiffre.</p>
 
     <h4>Replanifier en un geste</h4>
     <table>
@@ -1554,7 +1554,19 @@ function serializeFile(model){
    Remplace File System Access API (OneDrive)
    ═══════════════════════════════════════════════════════ */
 
-let ghAuth = { token: null, owner: null, dataRepo: "cap-data" };
+let ghAuth = { token: null, owner: null, dataOwner: null, dataRepo: "cap-data" };
+
+// Découpe la saisie "propriétaire/dépôt" ou juste "dépôt" (utilise alors le
+// compte du jeton). Permet de pointer vers un dépôt privé d'un AUTRE compte
+// que celui du jeton — utile pour partager l'app avec une autre personne.
+function parseRepoInput(raw, tokenOwner){
+  const v=(raw||"").trim().replace(/^\/+|\/+$/g,"");
+  if(v.includes("/")){
+    const [o,...rest]=v.split("/");
+    return { dataOwner:o.trim(), dataRepo:rest.join("/").trim()||"cap-data" };
+  }
+  return { dataOwner:tokenOwner, dataRepo:v||"cap-data" };
+}
 
 // SHA par espace + type (anti-conflit)
 const wsSha = {
@@ -1604,7 +1616,7 @@ async function deriveKey(passphrase, salt){
 
 // Lire ou créer le sel sur GitHub (fichier salt.b64, non chiffré)
 async function getOrCreateSalt(){
-  const url = `https://api.github.com/repos/${ghAuth.owner}/${ghAuth.dataRepo}/contents/salt.b64`;
+  const url = `https://api.github.com/repos/${ghAuth.dataOwner}/${ghAuth.dataRepo}/contents/salt.b64`;
   const headers = {
     Authorization: `Bearer ${ghAuth.token}`,
     Accept: "application/vnd.github+json",
@@ -1683,7 +1695,7 @@ ${raw}`;
 
 async function ghRead(espace, type){
   const filename = GH_FILES[espace][type];
-  const url = `https://api.github.com/repos/${ghAuth.owner}/${ghAuth.dataRepo}/contents/${filename}`;
+  const url = `https://api.github.com/repos/${ghAuth.dataOwner}/${ghAuth.dataRepo}/contents/${filename}`;
   const res = await fetch(url, {
     cache: "no-store",
     headers: {
@@ -1709,7 +1721,7 @@ async function ghRead(espace, type){
 
 async function ghWrite(espace, type, contenu){
   const filename = GH_FILES[espace][type];
-  const url = `https://api.github.com/repos/${ghAuth.owner}/${ghAuth.dataRepo}/contents/${filename}`;
+  const url = `https://api.github.com/repos/${ghAuth.dataOwner}/${ghAuth.dataRepo}/contents/${filename}`;
   const sha = wsSha[espace][type];
   const contenuEnc = await encryptText(contenu); // chiffrer avant envoi
   const body = { message: `[cap/${espace}] sync`, content: utf8b64(contenuEnc) };
@@ -1938,8 +1950,8 @@ function updateDirPath(){
   const bar=document.getElementById("dirBar");
   const el=document.getElementById("dirPath");
   if(!bar||!el) return;
-  if(!ghAuth.owner){ bar.classList.remove("show"); return; }
-  el.innerHTML='⬡ <span class="dp-folder">'+esc(ghAuth.owner)+'</span>'
+  if(!ghAuth.dataOwner){ bar.classList.remove("show"); return; }
+  el.innerHTML='⬡ <span class="dp-folder">'+esc(ghAuth.dataOwner)+'</span>'
     +'<span class="dp-sep"> / </span>'+esc(ghAuth.dataRepo)
     +'<span class="dp-sep"> / </span>'+esc(FILE_MAIN());
   bar.classList.add("show");
@@ -1984,8 +1996,7 @@ async function init(){
 
   // Charger token et repo depuis IndexedDB
   const savedToken = await idbGet("gh_token").catch(()=>null);
-  const savedRepo  = await idbGet("gh_repo").catch(()=>null);
-  if(savedRepo) ghAuth.dataRepo = savedRepo;
+  const savedRepo  = await idbGet("gh_repo").catch(()=>null);  // ex: "cap-data" ou "colleague/cap-data-colleague"
 
   const savedPass  = await idbGet("gh_pass").catch(()=>null);
 
@@ -1994,6 +2005,8 @@ async function init(){
     const owner = await ghTestAuth(savedToken);
     if(owner){
       ghAuth.owner = owner;
+      const { dataOwner, dataRepo } = parseRepoInput(savedRepo || "cap-data", owner);
+      ghAuth.dataOwner = dataOwner; ghAuth.dataRepo = dataRepo;
       try{
         await initCrypto(savedPass);
         await loadAll(true);
@@ -2008,6 +2021,7 @@ async function init(){
 function showAuthModal(){
   const m = $("authModal");
   m.style.display = "flex";
+  idbGet("gh_repo").then(v=>{ if(v) $("ghRepoInput").value=v; }).catch(()=>{});
 
 
   $("ghAuthBtn").onclick = async()=>{
@@ -2030,14 +2044,16 @@ function showAuthModal(){
       st.textContent = "✗ Jeton invalide ou réseau inaccessible";
       $("ghAuthBtn").disabled=false; $("ghAuthBtn").textContent="Se connecter"; return;
     }
-    ghAuth.token = token; ghAuth.owner = owner; ghAuth.dataRepo = repo;
+    ghAuth.token = token; ghAuth.owner = owner;
+    const { dataOwner, dataRepo } = parseRepoInput(repo, owner);
+    ghAuth.dataOwner = dataOwner; ghAuth.dataRepo = dataRepo;
     await idbSet("gh_token", token); await idbSet("gh_repo", repo);
     st.textContent = "Dérivation de la clé de chiffrement…";
     try{
       await initCrypto(pass);
       await idbSet("gh_pass", pass); // stocker pour auto-login
       st.style.background="var(--ok-soft)"; st.style.color="var(--ok)";
-      st.textContent = "✓ Connecté et chiffrement actif — " + owner;
+      st.textContent = "✓ Connecté — " + dataOwner + "/" + dataRepo;
       setTimeout(async()=>{
         try{ await loadAll(true); }
         catch(e){ st.style.background="var(--late-soft)"; st.style.color="var(--late)"; st.textContent="Erreur : "+e.message; $("ghAuthBtn").disabled=false; $("ghAuthBtn").textContent="Se connecter"; }
@@ -3779,7 +3795,7 @@ function inboxHeaders(){
   };
 }
 async function inboxList(){
-  const url = `https://api.github.com/repos/${ghAuth.owner}/${ghAuth.dataRepo}/contents/${INBOX_DIR}`;
+  const url = `https://api.github.com/repos/${ghAuth.dataOwner}/${ghAuth.dataRepo}/contents/${INBOX_DIR}`;
   const res = await fetch(url, { cache:"no-store", headers: inboxHeaders() });
   if(res.status === 404) return [];      // dossier absent = aucune note
   if(!res.ok) throw new Error(`GitHub ${res.status}`);
@@ -3787,14 +3803,14 @@ async function inboxList(){
   return Array.isArray(data) ? data.filter(it => it.type==="file" && /\.md$/i.test(it.name)) : [];
 }
 async function inboxGet(path){
-  const url = `https://api.github.com/repos/${ghAuth.owner}/${ghAuth.dataRepo}/contents/${path}`;
+  const url = `https://api.github.com/repos/${ghAuth.dataOwner}/${ghAuth.dataRepo}/contents/${path}`;
   const res = await fetch(url, { cache:"no-store", headers: inboxHeaders() });
   if(!res.ok) throw new Error(`GitHub ${res.status}`);
   const data = await res.json();
   return { text: await decryptText(b64utf8(data.content)), sha: data.sha };  // decryptText laisse passer le texte clair
 }
 async function inboxDelete(path, sha){
-  const url = `https://api.github.com/repos/${ghAuth.owner}/${ghAuth.dataRepo}/contents/${path}`;
+  const url = `https://api.github.com/repos/${ghAuth.dataOwner}/${ghAuth.dataRepo}/contents/${path}`;
   const res = await fetch(url, {
     method:"DELETE",
     headers: { ...inboxHeaders(), "Content-Type":"application/json" },
