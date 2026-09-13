@@ -121,6 +121,14 @@ Palette accent : bleu `#2F4ED8` (Pro) / vert `#1A8A57` (Perso).
 
 ---
 
+## Historique des correctifs
+
+- **2026-09-13** — Sélecteur de date du menu rapide (pastille de date) inopérant
+  sur navigateur et iPhone. Cause : `showPicker()` sur un input caché, non
+  supporté par Safari iOS. Corrigé via un `<input type="date">` réel superposé
+  en `<label>` sur le bouton "Choisir une date…" (déclenchement natif, sans
+  script). Voir handoff pour le détail.
+
 ## Évolutions prévues
 
 - Vraie icône PWA générée avec Canvas
