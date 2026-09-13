@@ -602,8 +602,12 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
 .sheet-chip.on-standby{background:var(--standby-soft); color:var(--standby); border-color:var(--standby)}
 .sheet-chip.on-prio{background:var(--late-soft); color:var(--late); border-color:var(--late)}
 
-/* Champ date invisible pour showPicker() */
-.pick-date{position:fixed; z-index:1; width:1px; height:1px; opacity:0; pointer-events:none; border:0}
+/* Sélecteur de date natif superposé (label + input réel, cliquable directement — fiable sur iOS) */
+.ctx-pick-input, .sheet-pick-input{
+  position:absolute; inset:0; width:100%; height:100%;
+  opacity:0; border:0; margin:0; padding:0; cursor:pointer;
+}
+.sheet-pick{position:relative}
 
 /* ═════════ PANNEAU D'ÉDITION ═════════ */
 #epBackdrop{
@@ -1241,7 +1245,6 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 <div id="ctx"></div>
 <div id="sheetBackdrop"></div>
 <div id="sheet"></div>
-<input type="date" id="pickDate" class="pick-date" tabindex="-1" aria-hidden="true">
 
 <div id="toast"></div>
 
@@ -3432,19 +3435,6 @@ function quickEdit(t){
   openEditPanel(t);
 }
 
-/* ---------- Sélecteur de date natif ---------- */
-function openPicker(t, x, y){
-  const inp=$("pickDate");
-  inp.value=(t.kind==="subject" ? (t.end||TODAY) : t.date)||TODAY;
-  inp.style.left=(x??innerWidth/2)+"px";
-  inp.style.top=(y??innerHeight/2)+"px";
-  inp.onchange=async()=>{
-    if(inp.value) await reschedule(t, inp.value, frDateShort(inp.value));
-    inp.onchange=null;
-  };
-  try{ inp.showPicker(); }catch(e){ inp.focus(); inp.click(); }
-}
-
 /* ---------- Modèle commun des raccourcis ---------- */
 function quickItems(){
   return [
@@ -3480,7 +3470,8 @@ function ctxHTML(t){
     +rows
     +'<div class="ctx-it has-sub">'+IC.days+'<span>Jours de la semaine</span><span class="sub-arrow">▸</span>'
       +'<div class="ctx-sub">'+days+'</div></div>'
-    +'<button class="ctx-it" data-cmd="pick">'+IC.pick+'<span>Choisir une date…</span></button>'
+    +'<label class="ctx-it ctx-pick">'+IC.pick+'<span>Choisir une date…</span>'
+      +'<input type="date" class="ctx-pick-input" value="'+((t.kind==="subject")?(t.end||TODAY):(t.date||TODAY))+'"></label>'
     +'<div class="ctx-sep"></div>'
     +statusRows
     +'<div class="ctx-sep"></div>'
@@ -3506,6 +3497,11 @@ function openCtx(t, x, y){
     const sub=c.querySelector(".ctx-sub");
     if(sub && px+w+180 > innerWidth) sub.classList.add("flip");
   });
+  const pickInput=c.querySelector(".ctx-pick-input");
+  if(pickInput) pickInput.onchange=async()=>{
+    closeCtx();
+    if(pickInput.value) await reschedule(t, pickInput.value, frDateShort(pickInput.value));
+  };
 }
 function closeCtx(){ const c=$("ctx"); c.classList.remove("show"); c.innerHTML=""; ctxTask=null; }
 
@@ -3515,7 +3511,6 @@ $("ctx").addEventListener("click", async ev=>{
   if(it.dataset.iso){ closeCtx(); await reschedule(t, it.dataset.iso, it.dataset.lab); return; }
   const cmd=it.dataset.cmd; if(!cmd) return;
   closeCtx();
-  if(cmd==="pick")    openPicker(t, ev.clientX, ev.clientY);
   if(cmd==="wip")     await quickStatus(t, t.status==="wip"?"open":"wip");
   if(cmd==="standby") await quickStatus(t, t.status==="standby"?"open":"standby");
   if(cmd==="prio")    await quickPrio(t);
@@ -3551,7 +3546,8 @@ function sheetHTML(t){
     +(isSubj?'<div class="sheet-label">Échéance 🏁</div>':"")
     +rows
     +'<div class="sheet-days">'+days+'</div>'
-    +'<button class="sheet-it" data-cmd="pick">'+IC.pick+'<span>Choisir une date…</span></button>'
+    +'<label class="sheet-it sheet-pick">'+IC.pick+'<span>Choisir une date…</span>'
+      +'<input type="date" class="sheet-pick-input" value="'+((t.kind==="subject")?(t.end||TODAY):(t.date||TODAY))+'"></label>'
     +'<div class="sheet-sep"></div>'
     +chips
     +(chips?'<div class="sheet-sep"></div>':"")
@@ -3571,6 +3567,11 @@ function openSheet(t){
   s.innerHTML=sheetHTML(t);
   s.classList.add("show");
   $("sheetBackdrop").classList.add("show");
+  const pickInput=s.querySelector(".sheet-pick-input");
+  if(pickInput) pickInput.onchange=async()=>{
+    closeSheet();
+    if(pickInput.value) await reschedule(t, pickInput.value, frDateShort(pickInput.value));
+  };
 }
 function closeSheet(){
   sheetTask=null;
@@ -3612,7 +3613,6 @@ $("sheet").addEventListener("click", async ev=>{
   if(it.dataset.iso){ closeSheet(); await reschedule(t, it.dataset.iso, it.dataset.lab); return; }
   const cmd=it.dataset.cmd;
   closeSheet();
-  if(cmd==="pick")    openPicker(t);
   if(cmd==="wip")     await quickStatus(t, t.status==="wip"?"open":"wip");
   if(cmd==="standby") await quickStatus(t, t.status==="standby"?"open":"standby");
   if(cmd==="prio")    await quickPrio(t);
