@@ -2008,6 +2008,7 @@ async function init(){
   // sur la duplication Pro/Perso : ne jamais changer workspace après coup).
   const savedWs = await idbGet("cap_last_workspace").catch(()=>null);
   if(savedWs === "pro" || savedWs === "perso") workspace = savedWs;
+  updateWsUI(); // synchronise boutons/couleur dès le départ (sinon Pro reste affiché "on" par défaut)
 
   if(savedToken && savedPass){
     ghAuth.token = savedToken;
