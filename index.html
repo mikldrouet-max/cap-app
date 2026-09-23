@@ -2003,6 +2003,12 @@ async function init(){
 
   const savedPass  = await idbGet("gh_pass").catch(()=>null);
 
+  // Réouvrir sur le dernier espace actif de CET appareil (avant tout chargement,
+  // pour que loadAll(true) capture directement le bon workspace — cf. LESSONS.md
+  // sur la duplication Pro/Perso : ne jamais changer workspace après coup).
+  const savedWs = await idbGet("cap_last_workspace").catch(()=>null);
+  if(savedWs === "pro" || savedWs === "perso") workspace = savedWs;
+
   if(savedToken && savedPass){
     ghAuth.token = savedToken;
     const owner = await ghTestAuth(savedToken);
@@ -2136,6 +2142,7 @@ async function switchWorkspace(ws){
   wsCache[workspace]={model, lastSeenText};
   // basculer
   workspace=ws;
+  idbSet("cap_last_workspace", ws).catch(()=>{}); // mémorise l'espace pour la prochaine ouverture
   filter.tags.clear(); filter.pers.clear(); filter.high=false; filter.q="";
   delegStandbyOnly=false;
   view="tasks"; badgeDismissed=false;
