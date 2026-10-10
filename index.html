@@ -419,6 +419,10 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
   .t-date:hover{border-color:currentColor}
 }
 .t-rec{font-size:.72rem; color:var(--ink3)}
+.t-urg{
+  font-size:.66rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; line-height:1;
+  padding:3px 7px; border-radius:6px; background:var(--late); color:var(--surface);
+}
 .t-parent{
   font-size:.72rem; color:var(--ink3); background:var(--surface2);
   border:1px solid var(--line2); border-radius:999px; padding:2px 8px;
@@ -658,6 +662,7 @@ input[type=number].ep-input{width:70px}
 .ep-seg button:first-child{border-left:none}
 .ep-seg button.on{background:var(--ink); color:var(--surface)}
 .ep-seg button.on.hh{background:var(--late); color:#fff}
+.ep-seg button.on.uu{background:var(--late); color:var(--surface); font-weight:800}
 .ep-seg button.on.bb{background:var(--standby-soft); color:var(--standby)}
 .ep-seg button.on.ss-open{background:var(--accent); color:#fff}
 .ep-seg button.on.ss-wip{background:var(--wip); color:#fff}
@@ -681,6 +686,84 @@ input[type=number].ep-input{width:70px}
 .ep-del{color:var(--late); font-size:.86rem; font-weight:600; padding:10px; margin-left:auto; border-radius:9px}
 .ep-del:hover{background:var(--late-soft)}
 .g-row.selected, .subj-row.selected{background:var(--accent-soft)!important}
+
+/* ═════════ VUE PRIORITÉS (méthode Forster) ═════════ */
+.pr-card{
+  background:var(--surface); border:1px solid var(--accent-line); border-radius:var(--r);
+  box-shadow:var(--sh-1); padding:16px 18px; margin-bottom:16px;
+}
+.pr-q{font-size:.95rem; line-height:1.45; color:var(--ink2); margin-bottom:12px}
+.pr-q strong{color:var(--ink); font-weight:700}
+.pr-help-btn{
+  margin-left:auto; padding:6px 12px; border-radius:999px; font-size:.78rem; font-weight:650;
+  color:var(--accent); background:var(--accent-soft); border:1px solid var(--accent-line);
+  transition:background var(--dur), color var(--dur);
+}
+.pr-help-btn[aria-expanded="true"]{background:var(--accent); border-color:var(--accent); color:var(--surface)}
+.pr-help{
+  background:var(--surface); border:1px solid var(--accent-line); border-radius:var(--r);
+  box-shadow:var(--sh-1); padding:14px 18px 12px; margin-bottom:16px;
+}
+.pr-help h3{font-family:var(--font-disp); font-size:.95rem; font-weight:700; margin-bottom:8px}
+.pr-help ol{margin:0; padding-left:1.3rem; list-style:decimal; font-size:.88rem; line-height:1.5; color:var(--ink2)}
+.pr-help li{margin:6px 0; padding-left:2px}
+.pr-help strong{color:var(--ink); font-weight:700}
+.pr-help-note{margin-top:8px; font-size:.8rem; font-style:italic; color:var(--ink3)}
+.pr-fwrap{margin-bottom:16px}
+.pr-filters{display:flex; flex-wrap:wrap; gap:6px}
+.pr-chip{
+  padding:6px 12px; border-radius:999px; font-size:.8rem; font-weight:650;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink2);
+  transition:background var(--dur), border-color var(--dur), color var(--dur);
+}
+.pr-chip:hover:not(:disabled){border-color:var(--accent-line); background:var(--accent-soft)}
+.pr-chip.on, .pr-chip.on:hover:not(:disabled){background:var(--accent); border-color:var(--accent); color:var(--surface)}
+.pr-chip:disabled{opacity:.45; cursor:not-allowed}
+.pr-chipsep{width:1px; background:var(--line); margin:2px 4px}
+.pr-hidden{margin:7px 2px 0; font-size:.78rem; color:var(--ink3)}
+.pr-syncline{margin:-6px 2px 12px; font-size:.78rem; color:var(--ink3)}
+.pr-conflict{border-color:var(--wip)}
+.pr-conflict .pr-q{margin-bottom:12px}
+.pr-kicker-urg{color:var(--late)}
+.pr-kicker{
+  font-size:.72rem; font-weight:750; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:6px;
+}
+.pr-ref{
+  display:inline-block; padding:1px 8px; border-radius:7px; font-weight:700; color:var(--accent);
+  background:var(--accent-soft);
+}
+.pr-cand-d{margin-left:8px; font-size:.78rem; font-weight:600; color:var(--ink3)}
+.pr-btns{display:flex; flex-wrap:wrap; gap:8px}
+.pr-btn{
+  padding:9px 16px; border-radius:var(--rs); font-weight:650; font-size:.87rem;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink2);
+  transition:background var(--dur), border-color var(--dur);
+}
+.pr-btn:hover{border-color:var(--accent-line); background:var(--accent-soft)}
+.pr-btn.main{background:var(--accent); border-color:var(--accent); color:var(--surface)}
+.pr-btn.main:hover{background:var(--accent-h)}
+.pr-prog{margin-left:auto; align-self:center; font-size:.78rem; color:var(--ink3); font-variant-numeric:tabular-nums}
+.pr-row{display:flex; align-items:flex-start}
+.pr-row > .task{flex:1; min-width:0}
+.pr-dot{flex:0 0 auto; width:40px; padding-top:17px; display:flex; justify-content:center}
+.pr-dot i{
+  display:block; width:15px; height:15px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 0 4px var(--accent-soft);
+}
+.pr-row.dotted .task{font-weight:600}
+.pr-row.next{background:var(--accent-soft)}
+.pr-row.next .pr-dot i{box-shadow:0 0 0 4px var(--accent-line)}
+.pr-row.cand{background:var(--surface2); box-shadow:inset 3px 0 0 var(--accent)}
+.pr-sep{
+  padding:7px 18px; font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--ink3); background:var(--surface2); border-top:1px solid var(--line2); border-bottom:1px solid var(--line2);
+}
+.pr-note{padding:10px 18px 14px; font-size:.8rem; color:var(--ink3)}
+@media (max-width:599px){
+  .pr-dot{width:32px}
+  .pr-btn{flex:1 1 auto; text-align:center}
+}
 
 /* ═════════ VUE PARENTS (frise) ═════════ */
 .subjects-bar{display:flex; align-items:center; gap:12px; margin:4px 0 14px}
@@ -1051,6 +1134,10 @@ body.dark.perso .toast-undo{color:#7BE3D6}
       <svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 8.5l2 2 3.5-3.5"/></svg>
       <span class="sw-lbl">Délégué</span> <span class="sw-count" id="swDeleg">0</span>
     </button>
+    <button data-view="priorities">
+      <svg class="ic" viewBox="0 0 24 24"><circle cx="6" cy="6.5" r="2.2"/><circle cx="6" cy="12" r="2.2"/><path d="M11 6.5h9M11 12h9M4 18h16" /></svg>
+      <span class="sw-lbl">Priorités</span> <span class="sw-count" id="swPrio">·</span>
+    </button>
     <button data-view="dashboard">
       <svg class="ic" viewBox="0 0 24 24"><path d="M4 13h6v7H4zM14 4h6v16h-6zM4 4h6v5H4z"/></svg>
       <span class="sw-lbl">Stats</span> <span class="sw-count" id="swDash">·</span>
@@ -1072,7 +1159,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
       <button class="quick-add-btn" id="quickAdd">Ajouter</button>
     </div>
     <div class="quick-help">
-      <code>#projet</code> <code>@personne</code> <code>!</code> haute <code>__</code> basse <code>r:lundi</code> récurrence — dates : <em>demain, lundi, le 15…</em>
+      <code>#projet</code> <code>@personne</code> <code>!!</code> urgente <code>!</code> haute <code>__</code> basse <code>r:lundi</code> récurrence — dates : <em>demain, lundi, le 15…</em>
     </div>
     <div id="autoc"></div>
   </div>
@@ -1126,6 +1213,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
   <div id="subjectsView" style="display:none"></div>
   <div id="delegatedView" style="display:none"></div>
   <div id="dashboardView" style="display:none"></div>
+  <div id="prioView" style="display:none"></div>
 
 </div><!-- /task-col -->
 <div id="epBackdrop"></div>
@@ -1166,6 +1254,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
     <table>
       <tr><td><code>#mot</code></td><td>catégorie / tag</td></tr>
       <tr><td><code>@nom</code></td><td>personne concernée</td></tr>
+      <tr><td><code>!!</code></td><td>urgente (implique priorité haute) : pastille « Urgent », et tout en haut de l'onglet Priorités.</td></tr>
       <tr><td><code>!</code> / <code>__</code></td><td>priorité haute / basse (seule = normale). <code>↓</code> reste accepté.</td></tr>
       <tr><td><code>📅2026-06-20</code> ou <code>demain</code>, <code>lundi</code>, <code>le 15</code>…</td><td>date d'échéance</td></tr>
       <tr><td><code>r:semaine</code> ou <code>🔁semaine</code></td><td>récurrence (voir ci-dessous)</td></tr>
@@ -1436,7 +1525,7 @@ function nextOccurrence(rec, anchorISO, afterISO){
 let nextUid=1;
 function newTask(){
   return { uid:nextUid++, kind:"task", done:false, status:"open", text:"", date:null, doneDate:null,
-           prio:"n", rec:null, note:"", raw:false, rawLine:"",
+           prio:"n", urgent:false, rec:null, note:"", raw:false, rawLine:"",
            start:null, end:null, anchor:null, created:null };
 }
 
@@ -1449,6 +1538,7 @@ const RX = {
   rec: /\s*(?:🔁|r:)\s*(\S+)/,           // 🔁 ou r:
   subj: /(^|\s)=(?=\s|$)/,               // = en tête = Sujet (tâche parent)
   anchor: /(^|\s)\^([\p{L}\p{N}_-]+)/u,  // ^etiquette = lien vers un Sujet
+  urg: /(^|\s)!!(?=\s|$)/,                 // !! = urgent (implique priorité haute)
   hi: /(^|\s)!(?=\s|$)/,
   lo: /(^|\s)(?:↓|__)(?=\s|$)/,            // ↓ ou __
   tag: /#[\p{L}\p{N}_\/-]+/gu,
@@ -1490,7 +1580,8 @@ function parseFile(text){
       if(mm=body.match(RX.created)){ t.created=mm[1]; body=body.replace(RX.created,""); }
       if(mm=body.match(RX.anchor)){ t.anchor=mm[2]; body=body.replace(RX.anchor," "); }
       if(t.kind!=="subject" && (mm=body.match(RX.rec))){ t.rec=parseRec(mm[1]); body=body.replace(RX.rec,""); }
-      if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
+      if(RX.urg.test(body)){ t.urgent=(t.kind!=="subject"); t.prio="h"; body=body.replace(RX.urg," "); }
+      else if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
       else if(RX.lo.test(body)){ t.prio="b"; body=body.replace(RX.lo," "); }
       // Nettoyage : supprime les [~] parasites accumulés lors d'un bug de synchro antérieur
       body=body.replace(/(\[~\]\s*)+/g," ");
@@ -1522,7 +1613,8 @@ function serializeTask(t){
   const cbChar=t.status==="done"?"x":t.status==="wip"?"/":(t.status==="standby"?"~":" ");
   let l = "- ["+cbChar+"] ";
   if(t.kind==="subject") l+="= ";
-  if(t.prio==="h") l+="! ";
+  if(t.urgent && t.kind!=="subject") l+="!! ";     // urgent implique haute : une seule marque
+  else if(t.prio==="h") l+="! ";
   if(t.prio==="b") l+="__ ";
   l += t.text;
   if(t.kind==="subject"){
@@ -1573,8 +1665,8 @@ function parseRepoInput(raw, tokenOwner){
 
 // SHA par espace + type (anti-conflit)
 const wsSha = {
-  pro:   { main: null, arch: null },
-  perso: { main: null, arch: null }
+  pro:   { main: null, arch: null, chain: null },
+  perso: { main: null, arch: null, chain: null }
 };
 
 // Base64 ↔ UTF-8
@@ -1582,8 +1674,8 @@ function b64utf8(b64){ return decodeURIComponent(escape(atob(b64.replace(/\n/g,"
 function utf8b64(str){ return btoa(unescape(encodeURIComponent(str))); }
 
 const GH_FILES = {
-  pro:   { main: "pro.md",    arch: "archive-pro.md" },
-  perso: { main: "perso.md",  arch: "archive-perso.md" }
+  pro:   { main: "pro.md",    arch: "archive-pro.md",   chain: "chaine-pro.json" },
+  perso: { main: "perso.md",  arch: "archive-perso.md", chain: "chaine-perso.json" }
 };
 
 
@@ -1968,7 +2060,7 @@ function rollRecurring(){
       // une récurrence cochée directement dans le fichier → on la relance
       const hist={...newTask(), done:true, text:t.text, date:t.date,
                   doneDate:t.doneDate||TODAY, prio:t.prio, note:""};
-      t.done=false; t.doneDate=null; t.status="open";
+      t.done=false; t.doneDate=null; t.status="open"; t.urgent=false;   // l'occurrence suivante n'est plus urgente
       t.date=nextOccurrence(t.rec, t.date||TODAY, TODAY);
       model.tasks.push(hist);
     }
@@ -2206,6 +2298,7 @@ function taskHTML(t, hideDate){
   const dcls = !t.done && t.date<TODAY ? "late" : t.date===TODAY&&!t.done ? "today" : "";
   let meta=hideDate?'':'<button class="t-date num '+dcls+'"'+(isTask?' data-act="menu"':'')+' title="Replanifier">'+(t.done?("fait "+relDate(t.doneDate||TODAY,TODAY)):relDate(t.date,TODAY))+'</button>';
   if(t.rec) meta+='<span class="t-rec">🔁 '+esc(recLabel(t.rec))+'</span>';
+  if(isTask && t.urgent && !t.done) meta='<span class="t-urg">Urgent</span>'+meta;
   if(isTask && t.anchor && view!=="subjects"){
     const p=subjectByAnchor(t.anchor);
     if(p) meta+='<span class="t-parent">'+esc(p.text.slice(0,28))+'</span>';
@@ -2279,7 +2372,8 @@ function openEditPanel(t){
       '<div class="ep-field" id="wrapPrio">'+
         '<label class="ep-label">Priorité</label>'+
         '<div class="ep-seg" id="edPrio">'+
-          '<button data-p="h" class="hh '+(t.prio==="h"?"on":"")+'">! Haute</button>'+
+          '<button data-p="u" class="uu '+(t.urgent?"on":"")+'">!! Urgente</button>'+
+          '<button data-p="h" class="hh '+(t.prio==="h" && !t.urgent?"on":"")+'">! Haute</button>'+
           '<button data-p="n" class="'+(t.prio==="n"?"on":"")+'">Normale</button>'+
           '<button data-p="b" class="bb '+(t.prio==="b"?"on":"")+'">__ Basse</button>'+
         '</div>'+
@@ -2410,6 +2504,8 @@ function syncKindInputs(){
   show("wrapRec",       !isSubj);
   show("wrapSubjDates",  isSubj);
   show("wrapAnchor",     isSubj);
+  const ub=document.querySelector('#edPrio [data-p="u"]');   // pas d'urgence pour un parent
+  if(ub) ub.style.display=isSubj ? "none" : "";
 }
 function closeEditPanel(){
   editingUid=null;
@@ -2469,13 +2565,16 @@ function render(){
   $("swTasks").textContent=model.tasks.filter(t=>t.kind!=="subject"&&!t.done).length;
   $("swSubj").textContent=allSubjects().filter(s=>!s.done).length;
   $("swDeleg").textContent=delegatedTasks().length;
+  if(typeof prioWarm==="function"){ prioWarm(); prioUpdateCount(); }
   $("tasksView").style.display = view==="tasks" ? "" : "none";
   $("subjectsView").style.display = view==="subjects" ? "" : "none";
   $("delegatedView").style.display = view==="delegated" ? "" : "none";
   $("dashboardView").style.display = view==="dashboard" ? "" : "none";
+  $("prioView").style.display = view==="priorities" ? "" : "none";
   $("viewSwitch").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.view===view));
   updateBadge();
 
+  if(view==="priorities"){ $("filters").style.display="none"; renderPriorities(); return; }
   if(view==="subjects"){ renderSubjects(); renderFilters(); return; }
   if(view==="delegated"){ renderDelegated(); renderFilters(); return; }
   if(view==="dashboard"){ $("filters").style.display="none"; if(typeof renderDashboard==="function") renderDashboard(); return; }
@@ -2771,13 +2870,14 @@ function updateBadge(){
 function findTask(uid){ return model.tasks.find(t=>t.uid===uid); }
 
 async function toggleTask(t){
+  if(!t.done && typeof prioTaskCompleted==="function") prioTaskCompleted(t); // retire la tâche de la chaîne Priorités
   if(!t.done){
     if(t.rec && t.rec.type!=="raw"){
       const hist={...newTask(), done:true, status:"done", text:t.text, date:t.date,
                   doneDate:TODAY, prio:t.prio, note:""};
       model.tasks.push(hist);
       t.date=nextOccurrence(t.rec, t.date, TODAY>t.date?TODAY:t.date);
-      t.status="open"; t.done=false;
+      t.status="open"; t.done=false; t.urgent=false;   // l'occurrence suivante n'est plus urgente
       toast("Fait. Prochaine : "+frDateShort(t.date));
     }else{
       t.status="done"; t.done=true; t.doneDate=TODAY;
@@ -2849,8 +2949,11 @@ async function saveEdit(t){
   t.raw=false;
   // priorité depuis les segments
   const on=document.querySelector("#edPrio button.on");
-  t.prio=on?on.dataset.p:"n";
-  // si le texte contient encore !/↓, ils priment
+  const pv=on?on.dataset.p:"n";
+  t.urgent=(pv==="u" && kind!=="subject");      // « u » = urgent, qui implique la priorité haute
+  t.prio=(pv==="u") ? "h" : pv;
+  // si le texte contient encore !!/!/↓, ils priment
+  if(RX.urg.test(t.text)){ t.urgent=(kind!=="subject"); t.prio="h"; t.text=t.text.replace(RX.urg," ").replace(/\s+/g," ").trim(); }
   if(RX.hi.test(t.text)){ t.prio="h"; t.text=t.text.replace(RX.hi," ").replace(/\s+/g," ").trim(); }
   if(RX.lo.test(t.text)){ t.prio="b"; t.text=t.text.replace(RX.lo," ").replace(/\s+/g," ").trim(); }
 
@@ -3166,7 +3269,8 @@ function parseQuick(raw){
   if(mm=body.match(RX.date)){ t.date=mm[1]; body=body.replace(RX.date,""); }
   if(mm=body.match(RX.anchor)){ t.anchor=mm[2]; body=body.replace(RX.anchor," "); }
   if(t.kind!=="subject" && (mm=body.match(RX.rec))){ t.rec=parseRec(mm[1]); body=body.replace(RX.rec,""); }
-  if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
+  if(RX.urg.test(body)){ t.urgent=(t.kind!=="subject"); t.prio="h"; body=body.replace(RX.urg," "); }
+  else if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
   else if(RX.lo.test(body)){ t.prio="b"; body=body.replace(RX.lo," "); }
   // détection dates naturelles dans le texte
   const nlp=parseDateNLP(body, TODAY);
@@ -3425,10 +3529,18 @@ async function quickStatus(t, s){
   toastU("Marquée "+lbl, async()=>{ Object.assign(t, prev); await persist(); });
 }
 async function quickPrio(t){
-  const prev=t.prio;
+  const prev={prio:t.prio, urgent:t.urgent};
   t.prio = t.prio==="h" ? "n" : "h";
+  if(t.prio!=="h") t.urgent=false;               // l'urgence suppose la priorité haute
   await persist();
-  toastU(t.prio==="h"?"Priorité haute":"Priorité normale", async()=>{ t.prio=prev; await persist(); });
+  toastU(t.prio==="h"?"Priorité haute":"Priorité normale", async()=>{ Object.assign(t, prev); await persist(); });
+}
+async function quickUrgent(t){
+  const prev={prio:t.prio, urgent:t.urgent};
+  t.urgent=!t.urgent;
+  if(t.urgent) t.prio="h";                       // urgent implique priorité haute
+  await persist();
+  toastU(t.urgent?"Tâche urgente":"Urgence retirée", async()=>{ Object.assign(t, prev); await persist(); });
 }
 async function quickDelete(t){
   if(!confirm(t.kind==="subject"?"Supprimer ce parent ? Les sous-tâches ne seront pas supprimées.":"Supprimer définitivement cette tâche ?")) return;
@@ -3473,7 +3585,8 @@ function ctxHTML(t){
     ? '<button class="ctx-it" data-cmd="reopen">'+IC.reopen+'<span>Rouvrir</span></button>'
     : '<button class="ctx-it" data-cmd="wip">'+IC.wip+'<span>'+(t.status==="wip"?"Repasser en ouvert":"Marquer en cours")+'</span></button>'
       +'<button class="ctx-it" data-cmd="standby">'+IC.standby+'<span>'+(t.status==="standby"?"Sortir de l'attente":"Mettre en attente")+'</span></button>'
-      +(isSubj?"":'<button class="ctx-it" data-cmd="prio">'+IC.prio+'<span>'+(t.prio==="h"?"Priorité normale":"Priorité haute")+'</span></button>');
+      +(isSubj?"":'<button class="ctx-it" data-cmd="prio">'+IC.prio+'<span>'+(t.prio==="h"?"Priorité normale":"Priorité haute")+'</span></button>')
+      +(isSubj?"":'<button class="ctx-it" data-cmd="urgent">'+IC.prio+'<span>'+(t.urgent?"Retirer l'urgence":"Marquer urgent")+'</span></button>');
   return (isSubj?'<div class="ctx-label">Échéance 🏁</div>':"")
     +rows
     +'<div class="ctx-it has-sub">'+IC.days+'<span>Jours de la semaine</span><span class="sub-arrow">▸</span>'
@@ -3522,6 +3635,7 @@ $("ctx").addEventListener("click", async ev=>{
   if(cmd==="wip")     await quickStatus(t, t.status==="wip"?"open":"wip");
   if(cmd==="standby") await quickStatus(t, t.status==="standby"?"open":"standby");
   if(cmd==="prio")    await quickPrio(t);
+  if(cmd==="urgent")  await quickUrgent(t);
   if(cmd==="done")    await toggleTask(t);
   if(cmd==="reopen")  await toggleTask(t);
   if(cmd==="edit")    quickEdit(t);
@@ -3546,7 +3660,8 @@ function sheetHTML(t){
     '<div class="sheet-chips">'
     +'<button class="sheet-chip'+(t.status==="wip"?" on-wip":"")+'" data-cmd="wip">En cours</button>'
     +'<button class="sheet-chip'+(t.status==="standby"?" on-standby":"")+'" data-cmd="standby">En attente</button>'
-    +(isSubj?"":'<button class="sheet-chip'+(t.prio==="h"?" on-prio":"")+'" data-cmd="prio">! Haute</button>')
+    +(isSubj?"":'<button class="sheet-chip'+(t.prio==="h" && !t.urgent?" on-prio":"")+'" data-cmd="prio">! Haute</button>')
+    +(isSubj?"":'<button class="sheet-chip'+(t.urgent?" on-prio":"")+'" data-cmd="urgent">!! Urgent</button>')
     +'</div>';
   return '<div class="sheet-handle"></div>'
     +(isSubj?'<span class="sheet-tag">Parent</span>':"")
@@ -3624,6 +3739,7 @@ $("sheet").addEventListener("click", async ev=>{
   if(cmd==="wip")     await quickStatus(t, t.status==="wip"?"open":"wip");
   if(cmd==="standby") await quickStatus(t, t.status==="standby"?"open":"standby");
   if(cmd==="prio")    await quickPrio(t);
+  if(cmd==="urgent")  await quickUrgent(t);
   if(cmd==="done")    await toggleTask(t);
   if(cmd==="reopen")  await toggleTask(t);
   if(cmd==="edit")    quickEdit(t);
@@ -3779,7 +3895,8 @@ function parseInboxLine(raw){
   if(mm=body.match(RX.date)){ t.date=mm[1]; body=body.replace(RX.date,""); }
   if(mm=body.match(RX.anchor)){ t.anchor=mm[2]; body=body.replace(RX.anchor," "); }
   if(t.kind!=="subject" && (mm=body.match(RX.rec))){ t.rec=parseRec(mm[1]); body=body.replace(RX.rec,""); }
-  if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
+  if(RX.urg.test(body)){ t.urgent=(t.kind!=="subject"); t.prio="h"; body=body.replace(RX.urg," "); }
+  else if(RX.hi.test(body)){ t.prio="h"; body=body.replace(RX.hi," "); }
   else if(RX.lo.test(body)){ t.prio="b"; body=body.replace(RX.lo," "); }
   const nlp = parseDateNLP(body, TODAY);
   if(nlp.date && !t.date){ t.date=nlp.date; body=nlp.cleaned; }
@@ -4311,6 +4428,556 @@ function renderDashboard(){
   html+='</div>';
   $("dashboardView").innerHTML=html;
 }
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   PRIORITÉS — méthode Forster (« Final Version », esprit Dot List)
+   Logique pure (testable hors navigateur) + copie locale par espace, partagée
+   entre appareils via un fichier d'état séparé (chaine-<espace>.json).
+   La chaîne n'est jamais écrite dans le fichier de tâches et n'a aucun lien
+   avec persist(). Voir LESSONS.md (duplication Pro/Perso) : chaque attente
+   asynchrone (IndexedDB, réseau) re-vérifie l'espace actif.
+   ═══════════════════════════════════════════════════════ */
+
+/*PRIO-LOGIC-START*/
+const PRIO = {
+  key(t){ return (t.text||"").trim(); },                    // identité = texte nu, comme mergeExternal()
+  eligible(tasks){
+    return tasks.filter(t=>!t.done && t.kind!=="subject" && !(t.raw && !t.text) && PRIO.key(t));
+  },
+  // Plus ancienne créée d'abord ; sans date de création = la plus ancienne ;
+  // égalités : ordre du fichier ; tâches « commencée, pas finie » en fin de parcours.
+  order(tasks, st){
+    const pos=new Map(); tasks.forEach((t,i)=>pos.set(t,i));
+    const bi=t=>st.bottom.indexOf(PRIO.key(t));
+    return tasks.slice().sort((a,b)=>{
+      const ia=bi(a), ib=bi(b);
+      if((ia<0)!==(ib<0)) return ia<0 ? -1 : 1;
+      if(ia>=0) return ia-ib;
+      const ca=a.created||"0000-00-00", cb=b.created||"0000-00-00";
+      if(ca!==cb) return ca<cb ? -1 : 1;
+      return pos.get(a)-pos.get(b);
+    });
+  },
+  uniq(a){ const s=new Set(); return a.filter(k=>s.has(k) ? false : (s.add(k), true)); },
+  // seen = tâches déjà examinées. Un état neuf part de [] ; null = état enregistré par une version d'avant
+  //        la mini-revue : toutes les tâches existantes comptent alors comme examinées (voir settle).
+  // mini = la revue en cours est limitée aux nouvelles tâches
+  // filter = tâches proposées à la revue : depth (all|today|tomorrow|week, cumulatif) et rec (récurrentes incluses)
+  // sync = repère de partage entre appareils : rev (version lue ou écrite en dernier), dirty (changement de la
+  //        chaîne pas encore envoyé), sig (signature du contenu partagé au dernier partage).
+  blank(){ return {v:1, mode:"idle", chain:[], queue:[], qn:0, bottom:[], seen:[], mini:false, filter:{depth:"all", rec:false}, sync:{rev:null, dirty:false, sig:""}}; },
+  normalize(raw){
+    const b=PRIO.blank();
+    if(!raw || typeof raw!=="object") return b;
+    const arr=x=>Array.isArray(x) ? x.filter(k=>typeof k==="string") : [];
+    b.mode=(raw.mode==="reviewing" || raw.mode==="executing") ? raw.mode : "idle";
+    b.chain=PRIO.uniq(arr(raw.chain)); b.queue=PRIO.uniq(arr(raw.queue)); b.bottom=PRIO.uniq(arr(raw.bottom));
+    b.qn=Number.isFinite(raw.qn) ? raw.qn : b.queue.length;
+    b.seen=Array.isArray(raw.seen) ? PRIO.uniq(arr(raw.seen)) : null;   // enregistrement existant sans « seen » : migration
+    b.mini=(b.mode==="reviewing" && raw.mini===true);
+    const f=raw.filter;
+    if(f && typeof f==="object"){
+      if(["all","today","tomorrow","week"].indexOf(f.depth)>=0) b.filter.depth=f.depth;
+      b.filter.rec=(f.rec===true);
+    }
+    const s=raw.sync;
+    if(s && typeof s==="object"){
+      b.sync.rev=Number.isInteger(s.rev) ? s.rev : null;
+      b.sync.dirty=(s.dirty===true);
+      b.sync.sig=typeof s.sig==="string" ? s.sig : "";
+    }
+    return b;
+  },
+
+  /* ----- Partage entre appareils (fichier d'état chaine-<espace>.json) ----- */
+  hash(s){   // cyrb53 : signature courte, pour détecter un changement sans stocker tout le contenu
+    let h1=0xdeadbeef, h2=0x41c6ce57;
+    for(let i=0, ch; i<s.length; i++){ ch=s.charCodeAt(i); h1=Math.imul(h1^ch, 2654435761); h2=Math.imul(h2^ch, 1597334677); }
+    h1=Math.imul(h1^(h1>>>16), 2246822507)^Math.imul(h2^(h2>>>13), 3266489909);
+    h2=Math.imul(h2^(h2>>>16), 2246822507)^Math.imul(h1^(h1>>>13), 3266489909);
+    return (4294967296*(2097151&h2)+(h1>>>0)).toString(36);
+  },
+  // Ce qui est partagé. Une revue en cours est partagée comme « exécution » : seule la chaîne déjà formée voyage.
+  shared(x){
+    return {mode: x.mode==="idle" ? "idle" : "executing", chain: x.chain||[], bottom: x.bottom||[], seen: (x.seen||[]).slice().sort()};
+  },
+  sig(x){ return PRIO.hash(JSON.stringify(PRIO.shared(x))); },
+  payload(st, ws, rev, dev, at){
+    const sh=PRIO.shared(st);
+    return {v:1, ws:ws, rev:rev, dev:dev, at:at, mode:sh.mode, chain:sh.chain, bottom:sh.bottom, seen:st.seen||[]};
+  },
+  // Lit le fichier distant. null = absent, illisible ou d'un autre espace (jamais appliqué).
+  parseRemote(text, ws){
+    if(!text || !String(text).trim()) return null;
+    let o; try{ o=JSON.parse(text); }catch(e){ return null; }
+    if(!o || o.ws!==ws || !Number.isInteger(o.rev) || o.rev<1) return null;
+    const arr=x=>Array.isArray(x) ? PRIO.uniq(x.filter(k=>typeof k==="string")) : [];
+    return {rev:o.rev, dev:String(o.dev||"un autre appareil"), at:String(o.at||""),
+            mode:o.mode==="executing" ? "executing" : "idle", chain:arr(o.chain), bottom:arr(o.bottom), seen:arr(o.seen)};
+  },
+  // Une tâche de la chaîne distante absente de cet appareil (fichier de tâches pas à jour) : ne pas adopter.
+  // Les tâches terminées ici comptent comme présentes.
+  missing(remote, tasks){
+    const all=new Set(tasks.map(PRIO.key));
+    return remote.chain.some(k=>!all.has(k));
+  },
+  worth(st){ return st.chain.length>1 || st.mode==="executing" || st.sync.dirty; },
+  // Que faire entre mon état et le fichier distant ? (tableau de l'intention du 2026-10-06)
+  decide(st, remote){
+    const worth=PRIO.worth(st);
+    if(!remote) return worth ? "push" : "none";
+    const same=(PRIO.sig(st)===PRIO.sig(remote));
+    const r=st.sync.rev;
+    if(r===null || remote.rev<r) return !worth ? (st.mode==="reviewing" ? "wait" : "adopt") : (same ? "link" : "conflict");
+    if(remote.rev===r) return st.sync.dirty ? "push" : "none";
+    if(st.mode==="reviewing") return "wait";              // pas de changement de chaîne sous les yeux pendant une revue
+    return st.sync.dirty ? (same ? "link" : "conflict") : "adopt";
+  },
+  // Appelé aux points de contrôle : y a-t-il quelque chose de nouveau à partager ?
+  touch(st){ st.sync.dirty=(PRIO.sig(st)!==st.sync.sig); },
+  adopt(st, r){
+    st.chain=r.chain.slice(); st.bottom=r.bottom.slice(); st.seen=r.seen.slice(); st.mode=r.mode;
+    st.queue=[]; st.qn=0; st.mini=false;
+    st.sync={rev:r.rev, dirty:false, sig:PRIO.sig(r)};
+  },
+  link(st, r){ st.sync={rev:r.rev, dirty:false, sig:PRIO.sig(st)}; },
+  // Une étape de partage, sans réseau : lit l'état distant déjà obtenu, décide, applique.
+  // Renvoie ce que l'appelant doit faire : écrire (write puis commit), montrer un conflit, afficher un message.
+  step(st, ws, remote, tasks, dev, at){
+    const out={act:PRIO.decide(st, remote), write:null, commit:null, conflict:null, from:null};
+    if(out.act==="push"){
+      const rev=(remote ? remote.rev : 0)+1;
+      out.write=PRIO.payload(st, ws, rev, dev, at);
+      out.commit=function(){ st.sync={rev:rev, dirty:false, sig:PRIO.sig(st)}; };
+    }else if(out.act==="adopt" || out.act==="conflict"){
+      out.from={dev:remote.dev, at:remote.at};
+      if(PRIO.missing(remote, tasks)) out.act="missing";
+      else if(out.act==="adopt") PRIO.adopt(st, remote);
+      else out.conflict=remote;
+    }else if(out.act==="link"){
+      PRIO.link(st, remote);
+    }
+    return out;
+  },
+  // Date limite (incluse) de la profondeur choisie ; null = pas de limite. Les retards sont donc toujours inclus.
+  limit(depth, today, addDays){
+    return depth==="today" ? today : depth==="tomorrow" ? addDays(today,1) : depth==="week" ? addDays(today,7) : null;
+  },
+  inScope(t, f, ctx){
+    if(!f.rec && t.rec) return false;
+    return !ctx || ctx.limit===null || (t.date||"0000-00-00")<=ctx.limit;
+  },
+  // Tâches urgentes ouvertes (marquées !! dans le fichier de tâches), dans l'ordre : échéance, création, fichier.
+  // Calculées à l'affichage : jamais copiées dans la chaîne partagée.
+  urgent(tasks){
+    const el=PRIO.eligible(tasks).filter(t=>t.urgent===true);
+    const pos=new Map(); el.forEach((t,i)=>pos.set(t,i));
+    el.sort((a,b)=>{
+      const da=a.date||"9999-99-99", db=b.date||"9999-99-99";
+      if(da!==db) return da<db ? -1 : 1;
+      const ca=a.created||"0000-00-00", cb=b.created||"0000-00-00";
+      if(ca!==cb) return ca<cb ? -1 : 1;
+      return pos.get(a)-pos.get(b);
+    });
+    return PRIO.uniq(el.map(PRIO.key));
+  },
+  // Tâches ouvertes qui passent les filtres : ce sont elles qu'on examine et qu'on liste.
+  // Les urgentes en sont exclues : elles ont déjà leur place, tout en haut, quel que soit le filtre.
+  scope(st, tasks, ctx){
+    const U=new Set((ctx && ctx.urgent) || []);
+    return PRIO.eligible(tasks).filter(t=>!U.has(PRIO.key(t)) && PRIO.inScope(t, st.filter, ctx));
+  },
+  // Remet l'état en cohérence avec les tâches ouvertes. Renvoie true si l'état a changé.
+  settle(st, tasks, ctx){
+    const before=JSON.stringify(st);
+    const el=PRIO.eligible(tasks), keys=new Set(el.map(PRIO.key));
+    const scoped=PRIO.scope(st, tasks, ctx);
+    const keep=a=>a.filter(k=>keys.has(k));
+    st.chain=keep(st.chain); st.bottom=keep(st.bottom);
+    // Première fois (état sans « seen ») : toutes les tâches existantes comptent comme examinées.
+    st.seen = st.seen===null ? PRIO.uniq(el.map(PRIO.key)) : keep(st.seen);
+    const inChain=new Set(st.chain);
+    st.queue=keep(st.queue).filter(k=>!inChain.has(k));
+    if(st.mode==="reviewing" && !st.queue.length) st.mode="executing";
+    // Au repos, une référence sortie du filtre est remplacée (jamais en cours d'exécution).
+    if(st.mode==="idle" && st.chain.length===1 && !scoped.some(t=>PRIO.key(t)===st.chain[0])) st.chain=[];
+    if(!st.chain.length){
+      // chaîne vide : la première tâche du filtre devient l'ancre (référence), sans question
+      st.queue=[]; st.qn=0; st.mode="idle";
+      const first=PRIO.order(scoped, st)[0];
+      if(first) st.chain=[PRIO.key(first)];
+    }else if(st.mode==="idle" && st.chain.length>1){
+      st.mode="executing";
+    }
+    if(st.mode!=="reviewing"){ st.queue=[]; st.qn=0; st.mini=false; }
+    const seenSet=new Set(st.seen);
+    st.chain.forEach(k=>{ if(!seenSet.has(k)){ st.seen.push(k); seenSet.add(k); } });   // une tâche de la chaîne est toujours examinée
+    ((ctx && ctx.urgent) || []).forEach(k=>{ if(keys.has(k) && !seenSet.has(k)){ st.seen.push(k); seenSet.add(k); } });   // une urgente aussi
+    return JSON.stringify(st)!==before;
+  },
+  // Revue complète : les tâches du filtre comptent comme examinées, même si on arrête avant la fin.
+  // Celles hors filtre ne le sont pas : élargir le filtre les fera apparaître comme « nouvelles ».
+  start(st, tasks, ctx){
+    const inChain=new Set(st.chain);
+    const sc=PRIO.scope(st, tasks, ctx);
+    const q=PRIO.uniq(PRIO.order(sc, st).map(PRIO.key)).filter(k=>!inChain.has(k));
+    st.queue=q; st.qn=q.length; st.mini=false;
+    st.seen=PRIO.uniq((st.seen||[]).concat(sc.map(PRIO.key)));
+    st.mode=q.length ? "reviewing" : "executing";
+  },
+  // Nouvelles tâches = dans le filtre, ni dans la chaîne, ni déjà examinées. Même ordre de parcours.
+  fresh(st, tasks, ctx){
+    const seen=new Set(st.seen||[]), inChain=new Set(st.chain);
+    return PRIO.uniq(PRIO.order(PRIO.scope(st, tasks, ctx), st).map(PRIO.key)).filter(k=>!seen.has(k) && !inChain.has(k));
+  },
+  // Mini-revue pendant l'exécution : seulement les nouvelles, comparées à la tâche en tête de chaîne.
+  startNew(st, tasks, ctx){
+    if(st.mode!=="executing") return false;
+    const q=PRIO.fresh(st, tasks, ctx);
+    if(!q.length) return false;
+    st.queue=q; st.qn=q.length; st.mini=true; st.mode="reviewing";
+    return true;
+  },
+  answer(st, yes){
+    if(st.mode!=="reviewing" || !st.queue.length) return;
+    const k=st.queue.shift();
+    if(yes) st.chain.push(k);
+    if(st.seen && st.seen.indexOf(k)<0) st.seen.push(k);
+    if(!st.queue.length){ st.mode="executing"; st.qn=0; st.mini=false; }
+  },
+  // Arrêt anticipé : la chaîne est gardée. En mini-revue, les nouvelles restantes restent nouvelles.
+  finish(st){ st.queue=[]; st.qn=0; st.mini=false; st.mode="executing"; },
+  remove(st, key){
+    st.chain=st.chain.filter(k=>k!==key);
+    st.queue=st.queue.filter(k=>k!==key);
+  },
+  partial(st, key){
+    PRIO.remove(st, key);
+    st.bottom=st.bottom.filter(k=>k!==key); st.bottom.push(key);
+  },
+  next(st){ return st.chain.length ? st.chain[st.chain.length-1] : null; },   // la prochaine à faire = la dernière retenue
+  // Ordre d'affichage et d'exécution : les urgentes d'abord, puis la dernière retenue en haut,
+  // l'ancre en bas de la chaîne. Une tâche à la fois urgente et dans la chaîne ne compte qu'une fois.
+  execOrder(st, urgent){ return PRIO.uniq((urgent||[]).concat(st.chain.slice().reverse())); },
+  // La tâche à faire maintenant : la première urgente, sinon la dernière retenue.
+  now(st, urgent){ return (urgent && urgent.length) ? urgent[0] : PRIO.next(st); }
+};
+/*PRIO-LOGIC-END*/
+
+/* ---------- Stockage local (IndexedDB), une chaîne par espace ---------- */
+const PRIO_CACHE={}, PRIO_LOADING={};
+let prioBusy=false;
+function prioLoad(ws){
+  if(PRIO_CACHE[ws]) return Promise.resolve(PRIO_CACHE[ws]);
+  if(!PRIO_LOADING[ws]){
+    PRIO_LOADING[ws]=idbGet("cap_chain_"+ws).catch(()=>null).then(v=>{
+      PRIO_CACHE[ws]=PRIO.normalize(v); delete PRIO_LOADING[ws]; return PRIO_CACHE[ws];
+    });
+  }
+  return PRIO_LOADING[ws];
+}
+function prioSave(ws){ if(PRIO_CACHE[ws]) idbSet("cap_chain_"+ws, PRIO_CACHE[ws]).catch(()=>{}); }
+
+// Appelé par toggleTask() : une tâche cochée quitte la chaîne (y compris une récurrente,
+// qui reste ouverte avec une nouvelle date et ne serait pas retirée toute seule).
+function prioTaskCompleted(t){
+  const ws=workspace, key=PRIO.key(t);
+  if(!key) return;
+  prioLoad(ws).then(st=>{
+    const inChain=st.chain.indexOf(key)>=0;
+    if(!inChain && st.queue.indexOf(key)<0) return;
+    PRIO.remove(st, key);
+    if(inChain) PRIO.touch(st);          // la chaîne a changé : à partager
+    prioSave(ws);
+    if(inChain) prioSync(ws, {force:true});
+    if(view==="priorities" && workspace===ws) renderPriorities();
+  });
+}
+
+/* ---------- Partage entre appareils : fichier chaine-<espace>.json dans cap-data ---------- */
+// Lecture et envoi sont de fines enveloppes autour de PRIO.step (logique pure, testée en Node).
+// Garde anti-duplication Pro/Perso : l'espace est capturé avant chaque attente réseau et revérifié après ;
+// le fichier de tâches n'est jamais lu ni écrit ici.
+const PRIO_SYNC={last:{}, busy:{}, again:{}, status:{}, info:{}, conflict:{}};
+function prioWhen(at){
+  const d=new Date(at); if(isNaN(d)) return "";
+  const hm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
+  return d.toDateString()===new Date().toDateString() ? "à "+hm : "le "+d.getDate()+"/"+(d.getMonth()+1)+" à "+hm;
+}
+function prioDeviceLabel(){
+  const ua=navigator.userAgent||"";
+  return /iPhone/.test(ua) ? "iPhone" : /iPad/.test(ua) ? "iPad" : /Android/.test(ua) ? "Android"
+       : /Windows/.test(ua) ? "PC" : /Macintosh/.test(ua) ? "Mac" : "un appareil";
+}
+async function prioSync(ws, opts){
+  opts=opts||{};
+  if(!ghAuth.token || !model.ws || model.ws!==ws) return;
+  if(PRIO_SYNC.busy[ws]){ if(opts.force) PRIO_SYNC.again[ws]=true; return; }
+  const now=Date.now();
+  if(!opts.force && now-(PRIO_SYNC.last[ws]||0)<20000) return;
+  PRIO_SYNC.last[ws]=now; PRIO_SYNC.busy[ws]=true;
+  const before=JSON.stringify([PRIO_SYNC.status[ws], PRIO_SYNC.info[ws], !!PRIO_SYNC.conflict[ws]]);
+  let changed=false;
+  try{
+    const st=await prioLoad(ws);
+    let text;
+    try{ text=await ghRead(ws, "chain"); }
+    catch(e){ PRIO_SYNC.status[ws]="offline"; return; }
+    if(workspace!==ws || model.ws!==ws) return;                 // l'espace a changé pendant l'attente
+    const remote=PRIO.parseRemote(text, ws);
+    PRIO.settle(st, model.tasks, prioCtx(st));
+    const r=PRIO.step(st, ws, remote, model.tasks, prioDeviceLabel(), new Date().toISOString());
+    PRIO_SYNC.status[ws]="ok";
+    if(r.act==="push"){
+      try{ await ghWrite(ws, "chain", JSON.stringify(r.write)); }
+      catch(e){ PRIO_SYNC.status[ws]="offline"; return; }       // reste « à envoyer », nouvel essai plus tard
+      r.commit(); delete PRIO_SYNC.conflict[ws];                  // l'état est celui de CET espace, même si l'espace actif a changé entre-temps
+      prioSave(ws); changed=true;
+    }else if(r.act==="adopt"){
+      PRIO.settle(st, model.tasks, prioCtx(st));
+      PRIO_SYNC.info[ws]="Chaîne mise à jour depuis "+r.from.dev+(prioWhen(r.from.at)?" "+prioWhen(r.from.at):"")+".";
+      delete PRIO_SYNC.conflict[ws]; prioSave(ws); changed=true;
+    }else if(r.act==="conflict"){
+      PRIO_SYNC.conflict[ws]={remote:r.conflict, from:r.from}; delete PRIO_SYNC.info[ws]; changed=true;
+    }else if(r.act==="missing"){
+      PRIO_SYNC.info[ws]="La chaîne de "+r.from.dev+" contient des tâches pas encore chargées ici. Appuyez sur ↺ Resync.";
+      changed=true;
+    }else if(r.act==="link"){
+      delete PRIO_SYNC.conflict[ws]; prioSave(ws);
+    }else if(r.act==="none"){
+      if(!st.sync.dirty) delete PRIO_SYNC.conflict[ws];
+    }
+  }finally{
+    PRIO_SYNC.busy[ws]=false;
+    const after=JSON.stringify([PRIO_SYNC.status[ws], PRIO_SYNC.info[ws], !!PRIO_SYNC.conflict[ws]]);
+    if((changed || after!==before) && view==="priorities" && workspace===ws) renderPriorities();
+    if(PRIO_SYNC.again[ws]){ PRIO_SYNC.again[ws]=false; prioSync(ws, {force:true}); }
+  }
+}
+// Retour sur l'app : relire le fichier d'état si l'onglet Priorités est affiché.
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState==="visible" && view==="priorities") prioSync(workspace);
+});
+window.addEventListener("focus", ()=>{ if(view==="priorities") prioSync(workspace); });
+
+/* ---------- Compteur de l'onglet ---------- */
+function prioUpdateCount(){
+  const el=$("swPrio"); if(!el) return;
+  const ws=workspace, st=PRIO_CACHE[ws];
+  if(!st || !model.ws || model.ws!==ws){ el.textContent="·"; return; }
+  const keys=new Set(PRIO.eligible(model.tasks).map(PRIO.key));
+  el.textContent=PRIO.execOrder(st, PRIO.urgent(model.tasks)).filter(k=>keys.has(k)).length;
+}
+function prioWarm(){
+  const ws=workspace;
+  if(!model.ws || model.ws!==ws || PRIO_CACHE[ws] || PRIO_LOADING[ws]) return;
+  prioLoad(ws).then(()=>{ if(workspace===ws) prioUpdateCount(); });
+}
+
+/* ---------- Tutoriel (panneau « Comment ça marche ? ») ---------- */
+// Ouvert d'office à la première visite sur un appareil (clé locale cap_prio_help), replié ensuite.
+let prioHelpOpen=false, prioHelpReady=null;
+function prioHelpInit(){
+  if(!prioHelpReady){
+    prioHelpReady=idbGet("cap_prio_help").catch(()=>true).then(v=>{
+      if(!v){ prioHelpOpen=true; idbSet("cap_prio_help", true).catch(()=>{}); }
+    });
+  }
+  return prioHelpReady;
+}
+const PRIO_HELP_HTML='<div class="pr-help" id="prHelp"><h3>Comment ça marche ?</h3><ol>'
+  +'<li>La tâche la plus ancienne sert de <strong>référence</strong>.</li>'
+  +'<li>Lancez la <strong>revue</strong> : Cap. vous montre les autres tâches une par une. « Préférez-vous faire celle-ci avant la référence ? »</li>'
+  +'<li>Si <strong>oui</strong>, la tâche prend un <strong>point</strong>, monte en haut et devient la nouvelle référence. Si <strong>non</strong>, on passe à la suivante.</li>'
+  +'<li>Faites ensuite les tâches pointées <strong>de haut en bas</strong>. Celle du haut est la prochaine à faire.</li>'
+  +'<li>Pas fini ? <strong>« Commencée, pas finie »</strong> la garde ouverte et la repousse à la fin de la prochaine revue. Vous pouvez aussi cocher une tâche hors ordre.</li>'
+  +'<li>Une tâche arrive en route ? <strong>« Examiner les nouvelles tâches »</strong> ne compare qu’elles à la tâche du haut.</li>'
+  +'<li>Trop de tâches ? Les <strong>filtres</strong> (échéance, récurrentes) limitent les tâches examinées. Votre chaîne reste toujours entière.</li>'
+  +'</ol><p class="pr-help-note">La chaîne est partagée entre vos appareils. Les filtres restent propres à chaque appareil.</p></div>';
+
+/* ---------- Filtres (échéance, récurrentes) ---------- */
+function prioCtx(st){ return {limit: PRIO.limit(st.filter.depth, TODAY, addDays), urgent: PRIO.urgent(model.tasks)}; }
+
+function prioFiltersHTML(st, open, scoped, ctx){
+  const f=st.filter, locked=(st.mode==="reviewing");
+  const dis=locked ? " disabled" : "";
+  const depths=[["today","Aujourd'hui"],["tomorrow","Demain"],["week","7 jours"],["all","Tout"]];
+  const chips=depths.map(d=>'<button class="pr-chip'+(f.depth===d[0]?" on":"")+'" data-pr="depth" data-v="'+d[0]+'"'+dis+'>'+d[1]+'</button>').join("")
+    +'<span class="pr-chipsep"></span>'
+    +'<button class="pr-chip'+(f.rec?" on":"")+'" data-pr="rec" aria-pressed="'+(f.rec?"true":"false")+'"'+dis+'>Récurrentes</button>';
+  // tâches ouvertes laissées de côté par les filtres (la chaîne n'est jamais masquée)
+  const inChain=new Set(st.chain.concat(ctx.urgent||[])), inScope=new Set(scoped.map(PRIO.key));
+  const hiddenT=open.filter(t=>!inChain.has(PRIO.key(t)) && !inScope.has(PRIO.key(t)));
+  const hiddenKeys=new Set(hiddenT.map(PRIO.key));
+  const nRec=PRIO.uniq(hiddenT.filter(t=>t.rec && !f.rec).map(PRIO.key)).length;
+  let info="";
+  if(locked) info="Filtres verrouillés pendant la revue.";
+  else if(hiddenKeys.size) info=hiddenKeys.size+" tâche"+(hiddenKeys.size>1?"s":"")+" masquée"+(hiddenKeys.size>1?"s":"")+" par les filtres"
+    +(nRec?" (dont "+nRec+" récurrente"+(nRec>1?"s":"")+")":"")+".";
+  return '<div class="pr-fwrap"><div class="pr-filters" role="group" aria-label="Filtres de la revue">'+chips+'</div>'
+    +(info?'<div class="pr-hidden">'+info+'</div>':'')+'</div>';
+}
+
+/* ---------- Rendu ---------- */
+function prioHTML(st){
+  const open=PRIO.eligible(model.tasks);
+  const ctx=prioCtx(st);
+  const scoped=PRIO.scope(st, model.tasks, ctx);
+  const byKey=new Map(); open.forEach(t=>{ const k=PRIO.key(t); if(!byKey.has(k)) byKey.set(k,t); });
+  const uKeys=ctx.urgent.filter(k=>byKey.has(k));
+  const topKeys=PRIO.execOrder(st, uKeys);
+  const head='<div class="subjects-bar"><h2>Priorités</h2><span class="count">'+topKeys.length+'</span>'
+    +'<button class="pr-help-btn" data-pr="help" aria-controls="prHelp" aria-expanded="'+(prioHelpOpen?"true":"false")+'">Comment ça marche ?</button></div>'
+    +(prioHelpOpen ? PRIO_HELP_HTML : "")
+    +prioSyncHTML(st, workspace)
+    +prioFiltersHTML(st, open, scoped, ctx);
+  const bench=byKey.get(PRIO.next(st));
+  if(!open.length || (!bench && !uKeys.length)){
+    return head+'<div class="pr-card"><div class="pr-q">'
+      +(open.length ? 'Aucune tâche ne correspond aux filtres. Élargissez l’échéance ou incluez les récurrentes.' : 'Aucune tâche ouverte à examiner.')
+      +'</div></div>';
+  }
+  let card;
+  if(st.mode==="reviewing" && bench && byKey.get(st.queue[0])){
+    const cand=byKey.get(st.queue[0]);
+    const n=st.qn-st.queue.length+1;
+    card='<div class="pr-card">'+(st.mini?'<div class="pr-kicker">Nouvelles tâches</div>':'')
+      +'<div class="pr-q">Préférez-vous faire la tâche <strong>'+highlight(cand.text)+'</strong>'
+      +'<span class="pr-cand-d">'+esc(relDate(cand.date,TODAY))+'</span><br>'
+      +'avant la tâche <span class="pr-ref">'+esc(bench.text)+'</span> ?</div>'
+      +'<div class="pr-btns">'
+      +'<button class="pr-btn main" data-pr="yes">Oui, la retenir</button>'
+      +'<button class="pr-btn" data-pr="no">Non, passer</button>'
+      +'<button class="pr-btn" data-pr="end">Terminer la revue</button>'
+      +'<span class="pr-prog">'+n+' / '+st.qn+'</span></div></div>';
+  }else if(st.mode==="executing" || !bench){
+    const nNew=bench ? PRIO.fresh(st, model.tasks, ctx).length : 0;
+    const nowT=byKey.get(PRIO.now(st, uKeys));
+    const urgentNow=uKeys.length>0;
+    card='<div class="pr-card">'+(urgentNow?'<div class="pr-kicker pr-kicker-urg">Urgent</div>':'')
+      +'<div class="pr-q">À faire maintenant : <strong>'+esc(nowT.text)+'</strong></div>'
+      +'<div class="pr-btns">'
+      +'<button class="pr-btn main" data-pr="done">Terminée</button>'
+      +(urgentNow
+        ? '<button class="pr-btn" data-pr="unurgent" title="La tâche reste en priorité haute, mais n’est plus en tête">Plus urgente</button>'
+        : '<button class="pr-btn" data-pr="partial" title="La tâche reste ouverte et passe en fin de la prochaine revue">Commencée, pas finie</button>')
+      +(nNew ? '<button class="pr-btn" data-pr="new" title="Comparer les tâches jamais examinées à la tâche du haut">Examiner les nouvelles tâches ('+nNew+')</button>' : '')
+      +'</div></div>';
+  }else{
+    card='<div class="pr-card"><div class="pr-q">Votre référence : <span class="pr-ref">'+esc(bench.text)+'</span>.<br>'
+      +'Parcourez la liste et retenez ce que vous préférez faire avant.</div>'
+      +'<div class="pr-btns"><button class="pr-btn main" data-pr="start">Démarrer la revue →</button></div></div>';
+  }
+  // Une seule liste : les tâches retenues (gros point) en haut, dans l'ordre où les faire,
+  // puis les autres tâches dans l'ordre de la revue.
+  const inChain=new Set(topKeys);
+  const nextKey=(st.mode==="executing" || !bench) ? PRIO.now(st, uKeys) : null;
+  const candKey=st.mode==="reviewing" ? st.queue[0] : null;
+  const row=(k,dotted)=>{
+    const t=byKey.get(k); if(!t) return "";
+    return '<div class="pr-row'+(dotted?" dotted":"")+(k===nextKey?" next":"")+(k===candKey?" cand":"")+'">'
+      +'<span class="pr-dot">'+(dotted?"<i></i>":"")+'</span>'+taskHTML(t)+'</div>';
+  };
+  const top=topKeys.map(k=>row(k,true)).join("");
+  const otherKeys=PRIO.uniq(PRIO.order(scoped, st).map(PRIO.key)).filter(k=>!inChain.has(k));
+  const others=otherKeys.map(k=>row(k,false)).join("");
+  const sep=(top && others) ? '<div class="pr-sep">Autres tâches · '+otherKeys.length+'</div>' : "";
+  const list='<section class="zone"><div class="zone-head"><h2>Mes tâches</h2><span class="count">'+(topKeys.length+otherKeys.length)+'</span></div>'
+    +'<div class="zone-body">'+top+sep+others
+    +'<div class="pr-note">Un point marque une tâche retenue : celle du haut se fait en premier. Chaîne partagée entre vos appareils.</div></div></section>';
+  return head+card+list;
+}
+
+/* ---------- Partage : ligne d'état, message, carte de conflit ---------- */
+function prioSyncHTML(st, ws){
+  const S=PRIO_SYNC;
+  let html="";
+  const c=S.conflict[ws];
+  if(c){
+    const dev=esc(c.from.dev), when=esc(prioWhen(c.from.at));
+    html+='<div class="pr-card pr-conflict"><div class="pr-q">La chaîne a changé sur <strong>'+dev+'</strong>'+(when?' '+when:'')+', et aussi ici. Laquelle garder ?</div>'
+      +'<div class="pr-btns"><button class="pr-btn main" data-pr="keep-remote">Garder celle de '+dev+'</button>'
+      +'<button class="pr-btn" data-pr="keep-mine">Garder la mienne</button></div></div>';
+  }
+  let line="";
+  if(S.info[ws]) line=S.info[ws];
+  else if(!ghAuth.token) line="";
+  else if(S.status[ws]==="offline") line=st.sync.dirty ? "En attente d’envoi (hors ligne)." : "Hors ligne : chaîne locale.";
+  else if(st.sync.dirty) line="En attente d’envoi.";
+  else if(st.sync.rev!==null) line="Chaîne synchronisée.";
+  return html+(line?'<div class="pr-syncline">'+esc(line)+'</div>':"");
+}
+
+async function renderPriorities(){
+  const ws=workspace, box=$("prioView");
+  if(!model.ws || model.ws!==ws){ box.innerHTML='<div class="empty">Chargement…</div>'; return; }
+  await prioHelpInit();
+  const st=await prioLoad(ws);
+  if(workspace!==ws || model.ws!==ws || view!=="priorities") return;   // l'espace ou l'onglet a changé pendant l'attente
+  if(PRIO.settle(st, model.tasks, prioCtx(st))) prioSave(ws);
+  box.innerHTML=prioHTML(st);
+  prioUpdateCount();
+  prioSync(ws);        // lit le fichier partagé (au plus toutes les 20 s) ; redessine seulement si quelque chose change
+}
+
+/* ---------- Actions ---------- */
+document.body.addEventListener("click", async ev=>{
+  const b=ev.target.closest("[data-pr]");
+  if(!b || prioBusy) return;
+  const ws=workspace;
+  if(!model.ws || model.ws!==ws || view!=="priorities") return;
+  if(b.dataset.pr==="help"){ prioHelpOpen=!prioHelpOpen; renderPriorities(); return; }   // simple affichage, aucun état à écrire
+  prioBusy=true;
+  try{
+    const st=await prioLoad(ws);
+    if(workspace!==ws || model.ws!==ws) return;
+    PRIO.settle(st, model.tasks, prioCtx(st));
+    const act=b.dataset.pr;
+    delete PRIO_SYNC.info[ws];    // le message « chaîne mise à jour » disparaît à la première action
+    let checkpoint=false, resolved=false;
+    if(act==="keep-remote"){      // conflit : adopter la chaîne de l'autre appareil
+      const c=PRIO_SYNC.conflict[ws];
+      if(c && !PRIO.missing(c.remote, model.tasks)){ PRIO.adopt(st, c.remote); delete PRIO_SYNC.conflict[ws]; resolved=true; }
+    }
+    else if(act==="keep-mine"){   // conflit : garder la mienne = je reconnais la version distante, puis j'envoie la suivante
+      const c=PRIO_SYNC.conflict[ws];
+      if(c){ st.sync.rev=c.remote.rev; st.sync.dirty=true; delete PRIO_SYNC.conflict[ws]; checkpoint=true; resolved=true; }
+    }
+    else if(act==="depth"){            // filtres verrouillés pendant une revue
+      const v=b.dataset.v;
+      if(st.mode!=="reviewing" && ["today","tomorrow","week","all"].indexOf(v)>=0) st.filter.depth=v;
+    }
+    else if(act==="rec"){ if(st.mode!=="reviewing") st.filter.rec=!st.filter.rec; }
+    else if(act==="start") PRIO.start(st, model.tasks, prioCtx(st));
+    else if(act==="new") PRIO.startNew(st, model.tasks, prioCtx(st));
+    else if(act==="yes") PRIO.answer(st, true);
+    else if(act==="no") PRIO.answer(st, false);
+    else if(act==="end") PRIO.finish(st);
+    else if(act==="partial"){
+      if(!prioCtx(st).urgent.length){ const k=PRIO.next(st); if(k) PRIO.partial(st, k); }   // pas pour une urgente
+    }
+    else if(act==="done"){
+      const k=PRIO.now(st, prioCtx(st).urgent);
+      const t=k && model.tasks.find(x=>!x.done && x.kind!=="subject" && PRIO.key(x)===k);
+      if(t){ await toggleTask(t); return; }   // persist() redessine ; prioTaskCompleted() retire la tâche
+    }
+    else if(act==="unurgent"){                 // la tâche reste en priorité haute, mais n'est plus en tête
+      const k=prioCtx(st).urgent[0];
+      const t=k && model.tasks.find(x=>!x.done && x.kind!=="subject" && x.urgent && PRIO.key(x)===k);
+      if(t){ t.urgent=false; await persist(); return; }
+    }
+    PRIO.settle(st, model.tasks, prioCtx(st));
+    // Points de contrôle : un Oui, la fin d'une revue (Terminer, dernière réponse), « Commencée, pas finie ».
+    // Les Non, les filtres et le démarrage d'une revue ne partagent rien.
+    if(act==="yes" || act==="end" || act==="partial" || (act==="no" && st.mode!=="reviewing")){
+      checkpoint=true; PRIO.touch(st);
+    }
+    prioSave(ws);
+    await renderPriorities();
+    if(checkpoint) prioSync(ws, {force:true});
+  }finally{ prioBusy=false; }
+});
 </script>
 <script>
 if("serviceWorker" in navigator){
