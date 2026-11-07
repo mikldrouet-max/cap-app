@@ -539,6 +539,27 @@ body.dark .chip.prio.on{background:var(--late-soft); color:var(--late); border-c
 }
 @keyframes optinUp{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
 @media(min-width:640px){ #badgeOptIn{left:auto; right:20px; max-width:380px; bottom:20px} }
+/* Sync Google (facultatif) : bouton du menu d'outils + carte d'état */
+#syncGoogleBtn{-webkit-touch-callout:none; -webkit-user-select:none; user-select:none; touch-action:manipulation}
+#syncgCard{
+  position:fixed; left:12px; right:12px;
+  bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px) + 14px);
+  z-index:350; display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--sh-menu); padding:11px 12px; font-size:.82rem; color:var(--ink);
+  animation:optinUp .3s var(--ease);
+}
+#syncgCard span{flex:1 1 100%; line-height:1.35}
+#syncgCard [hidden]{display:none !important}
+#syncgCard a, #syncgCard button{
+  background:none; border:none; padding:4px 2px; font-size:.8rem; font-weight:700;
+  color:var(--accent); cursor:pointer; text-decoration:none;
+}
+#syncgCard #syncgOff{color:var(--ink2); font-weight:600}
+#syncgCard #syncgX{margin-left:auto; color:var(--ink2); font-size:1rem; padding:4px 6px}
+body.dark #syncgCard a{color:#B9C2FF}
+body.dark.perso #syncgCard a{color:#7BE3D6}
+@media(min-width:640px){ #syncgCard{left:auto; right:20px; max-width:380px; bottom:20px} }
 .ctx-label, .sheet-label{
   font-size:.66rem; font-weight:750; letter-spacing:.06em; text-transform:uppercase;
   color:var(--ink3); padding:6px 12px 3px;
@@ -1109,6 +1130,9 @@ body.dark.perso .toast-undo{color:#7BE3D6}
         <button class="icon-btn" id="badgeBtn" title="Pastille sur l'icône" aria-label="Pastille sur l'icône">
           <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="14" height="14" rx="3"/><circle cx="18.5" cy="5.5" r="3.4" fill="currentColor" stroke="none"/></svg><span class="lbl">Pastille d'icône</span>
         </button>
+        <button class="icon-btn" id="syncGoogleBtn" title="Forcer la synchronisation de tâches avec Google Tasks" aria-label="Sync Google">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 8h15"/><path d="m15 4 4 4-4 4"/><path d="M20 16H5"/><path d="m9 12-4 4 4 4"/></svg><span class="lbl">Sync Google</span>
+        </button>
         <button class="icon-btn" id="helpBtn" title="Aide et syntaxe" aria-label="Aide">
           <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1 1-1.1 1.8"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg><span class="lbl">Aide</span>
         </button>
@@ -1249,6 +1273,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 
     <p><strong>Tirer pour rafraîchir.</strong> Tout en haut de la liste, tire vers le bas et relâche : Cap. recharge depuis GitHub et importe les notes vocales en attente.</p>
     <p><strong>Pastille sur l'icône (iPhone).</strong> iOS exige la permission Notifications pour afficher la pastille d'une app installée. À la première ouverture, Cap. propose de l'activer. Refusée par erreur ? Réglages › Notifications › Cap. › autoriser, avec « Pastilles » activé.</p>
+    <p><strong>Sync Google (facultatif).</strong> Pour ceux qui synchronisent leurs tâches avec Google Tasks par le workflow « Sync Google Tasks » de leur dépôt de données. Le bouton du menu ⋯ ne fait rien tant qu'on ne l'a pas activé sur l'appareil (une confirmation s'affiche au premier appui). Ensuite : un appui lance la synchro maintenant et recharge les tâches à la fin ; Maj + clic (ordinateur) ou appui long (écran tactile) lance un essai à blanc qui n'écrit rien. Le jeton GitHub doit avoir le droit Actions en lecture et écriture.</p>
 
     <h4>La syntaxe complète</h4>
     <table>
@@ -4110,6 +4135,219 @@ $("badgeBtn").onclick = async ()=>{
   }catch(e){ toast("Impossible\u00a0: "+e.message); }
   localStorage.setItem("cap-badge-optin","off");  // la bannière n'est plus utile
 };
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   SYNC GOOGLE — bouton facultatif (B13)
+   Lance à la demande le workflow « Sync Google Tasks » du dépôt de
+   données (GitHub Actions), suit l'exécution, puis recharge les tâches.
+   Sans effet tant qu'il n'est pas activé sur l'appareil (IndexedDB
+   « cap_sync_google ») : aucun appel réseau avant l'activation.
+   Ne touche ni persist(), ni loadAll(), ni switchWorkspace(), ni le
+   format des tâches. Tout est dans des try/catch.
+   Appels GitHub : GET dépôt (branche par défaut, droit Metadata lecture),
+   POST …/dispatches (droit Actions écriture), GET …/runs (Actions lecture).
+   ═══════════════════════════════════════════════════════════════ */
+/*SYNCG-LOGIC-START*/
+const SYNCG = {
+  WORKFLOW: "sync-google-tasks.yml",
+  MIN_GAP_MS: 60000,      // délai minimal entre deux lancements
+  POLL_MS: 4000,          // intervalle de suivi
+  FIND_MAX_MS: 30000,     // temps pour retrouver l'exécution si GitHub ne renvoie pas son identifiant
+  RUN_MAX_MS: 180000,     // au-delà, on cesse de suivre (l'exécution continue sur GitHub)
+  LONGPRESS_MS: 600,      // appui long = essai à blanc (écran tactile)
+  api(auth, path){ return "https://api.github.com/repos/"+auth.owner+"/"+auth.repo+path; },
+  headers(token){ return {Authorization:"Bearer "+token, Accept:"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28"}; },
+  body(ref, dry){ return {ref:ref, inputs:{dry_run: dry ? "true" : "false"}}; },
+  canStart(s, now){
+    if(s.busy) return {ok:false, why:"busy", wait:0};
+    const gap=now-(s.last||0);
+    if(s.last && gap<SYNCG.MIN_GAP_MS) return {ok:false, why:"gap", wait:Math.ceil((SYNCG.MIN_GAP_MS-gap)/1000)};
+    return {ok:true, why:null, wait:0};
+  },
+  errorText(status, step){
+    if(status===401) return "Jeton GitHub refusé. Reconnectez-vous avec le bouton GitHub.";
+    if(step==="repo" && (status===403 || status===404)) return "Dépôt de données introuvable, ou jeton sans accès à ce dépôt.";
+    if(status===403 || status===404) return "Le jeton n’a pas le droit Actions (lecture et écriture) sur le dépôt de données, ou le workflow « "+SYNCG.WORKFLOW+" » est introuvable.";
+    if(status===422) return "Le workflow n’accepte pas le lancement manuel, ou la branche est introuvable.";
+    return "GitHub a répondu "+status+".";
+  },
+  // waiting = en file / pas démarrée ; running ; ok / ko = terminée
+  phase(run){
+    if(!run) return "none";
+    if(run.status==="completed") return run.conclusion==="success" ? "ok" : "ko";
+    return run.status==="in_progress" ? "running" : "waiting";
+  },
+  // L'exécution lancée par ce clic : la plus ancienne de type « workflow_dispatch » créée à partir du clic (30 s de marge d'horloge).
+  pickRun(runs, sinceMs){
+    let best=null, bestT=Infinity;
+    for(const r of (runs||[])){
+      if(!r || r.event!=="workflow_dispatch") continue;
+      const t=Date.parse(r.created_at);
+      if(!Number.isFinite(t) || t < sinceMs-30000) continue;
+      if(t<bestT){ best=r; bestT=t; }
+    }
+    return best;
+  },
+  safeLink(u){ return (typeof u==="string" && /^https:\/\/github\.com\//.test(u)) ? u : ""; },
+  // Lance, retrouve et suit l'exécution. d = {auth:{token,owner,repo}, fetch, now(), sleep(ms), onState(s)}.
+  // Renvoie {phase: ok|ko|error|unknown|timeout, message?, htmlUrl?, runId?}. Ne lève jamais d'exception.
+  async run(d, dry){
+    const A=d.auth, H=SYNCG.headers(A.token);
+    const say=s=>{ try{ if(d.onState) d.onState(s); }catch(e){} };
+    const call=async(method, path, body)=>{
+      const res=await d.fetch(SYNCG.api(A, path), {method:method, cache:"no-store",
+        headers: body ? Object.assign({"Content-Type":"application/json"}, H) : H,
+        body: body ? JSON.stringify(body) : undefined});
+      let text=""; try{ text=await res.text(); }catch(e){}
+      let json=null; try{ json=text ? JSON.parse(text) : null; }catch(e){}
+      return {status:res.status, ok:res.ok, json:json};
+    };
+    let repo;
+    try{ repo=await call("GET", ""); }
+    catch(e){ return {phase:"error", message:"Réseau indisponible : la synchro n’a pas été lancée."}; }
+    if(!repo.ok) return {phase:"error", message:SYNCG.errorText(repo.status, "repo")};
+    const ref=(repo.json && repo.json.default_branch) || "main";
+    const t0=d.now();
+    let disp;
+    try{ disp=await call("POST", "/actions/workflows/"+SYNCG.WORKFLOW+"/dispatches", SYNCG.body(ref, dry)); }
+    catch(e){ return {phase:"error", message:"Réseau indisponible : la synchro n’a peut-être pas été lancée. Vérifiez dans GitHub > Actions."}; }
+    if(!disp.ok) return {phase:"error", message:SYNCG.errorText(disp.status)};
+    say("sent");
+    // GitHub renvoie l'identifiant de l'exécution (200) ou rien (204, ancien comportement) : on accepte les deux
+    let runId=(disp.json && disp.json.workflow_run_id) || null;
+    let htmlUrl=SYNCG.safeLink(disp.json && disp.json.html_url);
+    let run=null, fails=0;
+    for(;;){
+      try{
+        if(runId){
+          const r=await call("GET", "/actions/runs/"+runId);
+          if(r.ok) run=r.json;
+          else if(r.status===401 || r.status===403 || r.status===404)
+            return {phase:"unknown", runId, htmlUrl, message:"Lancement envoyé, mais le suivi est impossible (droit Actions en lecture ?). Vérifiez dans GitHub > Actions."};
+        }else{
+          const r=await call("GET", "/actions/workflows/"+SYNCG.WORKFLOW+"/runs?event=workflow_dispatch&per_page=10");
+          if(r.ok){ run=SYNCG.pickRun(r.json && r.json.workflow_runs, t0); if(run) runId=run.id; }
+        }
+        fails=0;
+      }catch(e){
+        if(++fails>=3) return {phase:"unknown", runId, htmlUrl, message:"Connexion perdue pendant le suivi. Vérifiez dans GitHub > Actions."};
+      }
+      if(run){
+        htmlUrl=SYNCG.safeLink(run.html_url) || htmlUrl;
+        const p=SYNCG.phase(run);
+        if(p==="ok" || p==="ko") return {phase:p, runId, htmlUrl};
+        say(p);
+      }
+      const waited=d.now()-t0;
+      if(!run && waited>SYNCG.FIND_MAX_MS) return {phase:"unknown", htmlUrl, message:"Lancement envoyé, mais l’exécution n’est pas encore visible. Vérifiez dans GitHub > Actions."};
+      if(waited>SYNCG.RUN_MAX_MS) return {phase:"timeout", runId, htmlUrl, message:"L’exécution dure plus que prévu (3 min) : elle continue sur GitHub."};
+      await d.sleep(SYNCG.POLL_MS);
+    }
+  }
+};
+/*SYNCG-LOGIC-END*/
+
+const SYNCG_KEY="cap_sync_google";
+let syncgBusy=false, syncgLast=0;
+
+/* Carte d'état (comme la bannière de la pastille) : message, lien « Journal », « Désactiver sur cet appareil » */
+function syncgCard(msg, url){
+  let c=$("syncgCard");
+  if(!c){
+    c=document.createElement("div"); c.id="syncgCard"; c.setAttribute("role","status");
+    c.innerHTML='<span id="syncgMsg"></span><a id="syncgLog" target="_blank" rel="noopener" hidden>Journal</a>'
+      +'<button id="syncgOff" type="button">Désactiver sur cet appareil</button>'
+      +'<button id="syncgX" type="button" aria-label="Fermer">✕</button>';
+    document.body.appendChild(c);
+    $("syncgX").onclick=()=>c.remove();
+    $("syncgOff").onclick=async()=>{
+      try{ await idbSet(SYNCG_KEY,false); }catch(e){}
+      c.remove(); toast("Sync Google désactivée sur cet appareil");
+    };
+  }
+  $("syncgMsg").textContent=msg;
+  const a=$("syncgLog");
+  if(url){ a.href=url; a.hidden=false; } else { a.hidden=true; }
+}
+
+/* Après une synchro réelle réussie : recharge l'espace affiché et importe inbox/ (comme le bouton Resynchroniser),
+   puis oublie la copie de l'AUTRE espace : elle se rechargera depuis GitHub à la prochaine bascule
+   (chemin déjà prévu par switchWorkspace quand le cache est absent), au lieu de servir une copie périmée. */
+async function syncgReload(){
+  try{ if(typeof fullResync==="function") await fullResync(); }catch(e){}
+  try{ const other=(workspace==="pro") ? "perso" : "pro"; delete wsCache[other]; }catch(e){}
+}
+
+async function syncgStart(dry){
+  if(syncgBusy){ toast("Une synchro Google est déjà en cours"); return; }
+  let on=false;
+  try{ on=((await idbGet(SYNCG_KEY))===true); }catch(e){}
+  if(!on){
+    if(confirm("Activer « Sync Google » sur cet appareil ?\n\nCe bouton lance la synchronisation de vos tâches avec Google Tasks (workflow « Sync Google Tasks » de votre dépôt de données). Il demande un jeton GitHub avec le droit Actions (lecture et écriture).\n\nNe l’activez pas si vous n’utilisez pas cette synchronisation.")){
+      try{ await idbSet(SYNCG_KEY,true); toast("Sync Google activée. Appuyez à nouveau pour lancer."); }
+      catch(e){ toast("Activation impossible sur cet appareil"); }
+    }
+    return;
+  }
+  if(!ghAuth.token){ toast("Connectez GitHub d’abord"); return; }
+  const g=SYNCG.canStart({busy:syncgBusy, last:syncgLast}, Date.now());
+  if(!g.ok){ toast("Patientez "+g.wait+" s avant de relancer"); return; }
+  syncgBusy=true; syncgLast=Date.now();
+  const btn=$("syncGoogleBtn"); btn.classList.add("spinning");
+  syncgCard(dry ? "Essai à blanc lancé…" : "Synchro Google lancée…", "");
+  const label={sent:"Lancée, en attente de l’exécution…", waiting:"En file d’attente sur GitHub…",
+               running: dry ? "Essai à blanc en cours…" : "Synchro en cours…"};
+  try{
+    let r;
+    try{
+      r=await SYNCG.run({
+        auth:{token:ghAuth.token, owner:ghAuth.dataOwner, repo:ghAuth.dataRepo},
+        fetch:(u,o)=>fetch(u,o), now:()=>Date.now(), sleep:ms=>new Promise(s=>setTimeout(s,ms)),
+        onState:s=>{ if(label[s]) syncgCard(label[s], ""); }
+      }, dry);
+    }catch(e){ r={phase:"error", message:"Erreur inattendue : la synchro Google n’a pas pu être suivie."}; }
+    const h=new Date(), hm=String(h.getHours()).padStart(2,"0")+":"+String(h.getMinutes()).padStart(2,"0");
+    const url=r.htmlUrl||"";
+    let msg;
+    if(r.phase==="ok" && !dry){
+      syncgCard("Synchro Google terminée à "+hm+". Rechargement des tâches…", url);
+      await syncgReload();
+      msg="Synchro Google terminée ✓ "+hm; toast(msg);
+    }else if(r.phase==="ok"){
+      msg="Essai à blanc terminé à "+hm+" : rien n’a été écrit. Les comptes sont dans le journal.";
+    }else if(r.phase==="ko"){
+      msg="La synchro Google a échoué à "+hm+". Voir le journal."; toast("Synchro Google en échec");
+    }else{
+      msg=r.message || "Synchro Google : état inconnu. Vérifiez dans GitHub > Actions.";
+    }
+    syncgCard(msg, url);
+  }finally{
+    syncgBusy=false; btn.classList.remove("spinning");
+  }
+}
+
+/* Clic = synchro réelle ; Maj + clic (ordinateur) ou appui long (écran tactile) = essai à blanc.
+   Avant activation, l'un comme l'autre ouvre seulement la demande d'activation. */
+(function(){
+  const b=$("syncGoogleBtn"); if(!b) return;
+  let timer=null, lp=false;
+  const clear=()=>{ if(timer){ clearTimeout(timer); timer=null; } };
+  b.addEventListener("pointerdown", ()=>{
+    lp=false; clear();
+    timer=setTimeout(()=>{
+      timer=null; lp=true;
+      try{ document.querySelector("header").classList.remove("tools-open"); }catch(e){}
+      syncgStart(true);
+    }, SYNCG.LONGPRESS_MS);
+  });
+  ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev, clear));
+  b.addEventListener("contextmenu", ev=>ev.preventDefault());
+  b.addEventListener("click", ev=>{
+    if(lp){ lp=false; ev.preventDefault(); ev.stopPropagation(); return; }   // l'appui long a déjà agi
+    syncgStart(ev.shiftKey);
+  });
+})();
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
