@@ -1080,7 +1080,7 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 body.eink{
   --bg:#FFFFFF; --surface:#FFFFFF; --surface2:#FFFFFF;
   --ink:#000000; --ink2:#222222; --ink3:#444444;
-  --accent:#1B2F8F; --accent-h:#12206B; --accent-soft:#FFFFFF; --accent-line:#1B2F8F;
+  --accent:#2B44C8; --accent-h:#1F33A3; --accent-soft:#FFFFFF; --accent-line:#2B44C8;
   --late:#D63A1F;   --late-soft:#FFFFFF;
   --wip:#A85A00;    --wip-soft:#FFFFFF;
   --ok:#0F6B3A;     --ok-soft:#FFFFFF;
@@ -1088,7 +1088,7 @@ body.eink{
   --low:#666666;
   --tag:#4B3A8C;    --tag-soft:#FFFFFF;
   --pk:#075A75;     --pk-soft:#FFFFFF;
-  --dash-pro:#1B2F8F; --dash-perso:#1F7A2B; --dash-late:#D63A1F; --dash-today:#A85A00;
+  --dash-pro:#2B44C8; --dash-perso:#269033; --dash-late:#D63A1F; --dash-today:#A85A00;
   --dash-done:#0F6B3A; --dash-soon:#4B3A8C; --dash-later:#666666;
   --line:#000000; --line2:#000000;
   --sh-1:none; --sh-2:none; --sh-menu:none;
@@ -1096,7 +1096,7 @@ body.eink{
   --dur:0s;
 }
 body.eink.perso{
-  --accent:#1F7A2B; --accent-h:#175E21; --accent-soft:#FFFFFF; --accent-line:#1F7A2B;
+  --accent:#269033; --accent-h:#1E7228; --accent-soft:#FFFFFF; --accent-line:#269033;
 }
 
 /* Pas d'animation ni de transition (écran lent à rafraîchir) */
@@ -1227,14 +1227,15 @@ body.eink .t-date.late::before{content:"\25B2\00a0"}
 body.eink .t-date.today{border-color:var(--accent); color:var(--accent)}
 body.eink .t-urg{border:2px solid var(--ink)}
 body.eink .pdot,
-body.eink .g-pdot{width:12px; height:12px}
-body.eink .pdot{margin-top:6px}
+body.eink .g-pdot{width:18px; height:18px}
+body.eink .pdot{margin-top:3px}
 body.eink .pdot.h,
 body.eink .g-pdot.h{background:var(--late); border:2px solid var(--ink); box-shadow:none}
 body.eink .pdot.n,
-body.eink .g-pdot.n{background:transparent; border:2px solid var(--ink)}
+body.eink .g-pdot.n{background:transparent; border:2px solid var(--ink); width:12px; height:12px; margin-left:3px; margin-right:3px}
+body.eink .pdot.n{margin-top:6px}
 body.eink .pdot.b,
-body.eink .g-pdot.b{background:var(--ink); border:0; opacity:1; width:6px; height:6px; margin-left:3px; margin-right:3px}
+body.eink .g-pdot.b{background:var(--ink); border:0; opacity:1; width:6px; height:6px; margin-left:6px; margin-right:6px}
 body.eink .pdot.b{margin-top:9px}
 body.eink .cb{width:26px; height:26px; margin-top:0; border-width:2.5px; border-color:var(--ink)}
 body.eink .g-cb{width:24px; height:24px; border-width:2.5px; border-color:var(--ink)}
