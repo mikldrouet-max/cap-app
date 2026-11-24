@@ -1,5 +1,5 @@
 /* Cap. — Service Worker v33 — réseau d'abord pour la page */
-const CACHE = "cap-v34";
+const CACHE = "cap-v35";
 const SHELL = ["./", "./index.html", "./manifest.json", "./favicon.svg", "./icon-192.png", "./icon-512.png"];
 
 // Installation : mettre le shell en cache + activer tout de suite

@@ -1071,6 +1071,327 @@ body.dark.perso .toast-undo{color:#7BE3D6}
   .day-label{padding:8px 14px 4px}
 }
 
+/*THEME-EINK-CSS-START*/
+/* ═════════ THEME E-INK (B15) ═════════
+   Troisième thème, pour écran e-ink couleur (Boox Note Air 6 C dans Memo Day) : classe `eink` posée sur <body>,
+   jamais combinée avec `dark`. Fonds blancs, texte noir, cadres épais, gras sur titres et libellés, pas d'ombre
+   ni d'animation. Tout est dans ce bloc ; chaque sélecteur commence par body.eink. Les valeurs sont des points
+   de départ, à juger sur la Boox. Spécification : docs/specs/20261124-spec-theme-eink.md */
+body.eink{
+  --bg:#FFFFFF; --surface:#FFFFFF; --surface2:#FFFFFF;
+  --ink:#000000; --ink2:#222222; --ink3:#444444;
+  --accent:#1B2F8F; --accent-h:#12206B; --accent-soft:#FFFFFF; --accent-line:#1B2F8F;
+  --late:#D63A1F;   --late-soft:#FFFFFF;
+  --wip:#A85A00;    --wip-soft:#FFFFFF;
+  --ok:#0F6B3A;     --ok-soft:#FFFFFF;
+  --standby:#3A4658; --standby-soft:#FFFFFF;
+  --low:#666666;
+  --tag:#4B3A8C;    --tag-soft:#FFFFFF;
+  --pk:#075A75;     --pk-soft:#FFFFFF;
+  --dash-pro:#1B2F8F; --dash-perso:#1F7A2B; --dash-late:#D63A1F; --dash-today:#A85A00;
+  --dash-done:#0F6B3A; --dash-soon:#4B3A8C; --dash-later:#666666;
+  --line:#000000; --line2:#000000;
+  --sh-1:none; --sh-2:none; --sh-menu:none;
+  --veil:rgba(255,255,255,.85);
+  --dur:0s;
+}
+body.eink.perso{
+  --accent:#1F7A2B; --accent-h:#175E21; --accent-soft:#FFFFFF; --accent-line:#1F7A2B;
+}
+
+/* Pas d'animation ni de transition (écran lent à rafraîchir) */
+body.eink *,
+body.eink *::before,
+body.eink *::after{transition:none!important; animation:none!important}
+body.eink :focus-visible{outline-width:3px}
+
+/* Ruban du haut et en-tête : traits pleins, pas de dégradé ni de flou */
+body.eink::before{height:4px; background:var(--accent)}
+body.eink header{background:var(--bg); -webkit-backdrop-filter:none; backdrop-filter:none; border-bottom-width:2px}
+
+/* Cadres épais (2 px) : cartes, zones, panneaux, menus, champs, boutons, puces */
+body.eink .auth-card,
+body.eink .auth-card input,
+body.eink #badge,
+body.eink .quick-box,
+body.eink #quickDate,
+body.eink #autoc,
+body.eink .chip,
+body.eink #search,
+body.eink .zone,
+body.eink .t-parent,
+body.eink #ctx,
+body.eink .rec-day,
+body.eink .kpi,
+body.eink .dash-card,
+body.eink #ptr,
+body.eink #badgeOptIn,
+body.eink #syncgCard,
+body.eink .ctx-sub,
+body.eink .sheet-day,
+body.eink .sheet-chip,
+body.eink .ep-input,
+body.eink .ep-seg,
+body.eink .ep-cancel,
+body.eink .pr-card,
+body.eink .pr-help,
+body.eink .pr-help-btn,
+body.eink .pr-chip,
+body.eink .pr-btn,
+body.eink .gantt,
+body.eink #subjectsView .subj-sub,
+body.eink .subj-done,
+body.eink .help-card,
+body.eink .close-help,
+body.eink #archSearch,
+body.eink .btn-ghost,
+body.eink .head-tools,
+body.eink .ws-switch,
+body.eink .view-switch{border-width:2px}
+body.eink .ep-seg button{border-left-width:2px}
+body.eink .quick-box:focus-within{box-shadow:none; border-width:3px}
+body.eink #editPanel.open{border-left-width:3px}
+body.eink #editPanel,
+body.eink #sheet{border-top:3px solid var(--line)}
+body.eink.qa-open .quick{border-top:3px solid var(--line)}
+body.eink #sheetBackdrop,
+body.eink #epBackdrop,
+body.eink #qaBackdrop,
+body.eink #helpModal,
+body.eink #archModal{background:var(--veil)}
+
+/* Fonds qui prenaient --line / --line2 : blanc + cadre (sinon ils deviendraient noirs) */
+body.eink .ws-switch,
+body.eink .view-switch,
+body.eink .dash-hb-track,
+body.eink .g-pill,
+body.eink .subj-prog,
+body.eink .help-card code,
+body.eink .quick-help code,
+body.eink .sw-count,
+body.eink .count{background:var(--surface)}
+body.eink .sw-count,
+body.eink .count,
+body.eink .g-pill,
+body.eink .subj-prog,
+body.eink .help-card code,
+body.eink .quick-help code{border:2px solid var(--line)}
+body.eink .ws-switch,
+body.eink .view-switch{border:2px solid var(--line)}
+body.eink .dash-hb-track{border:2px solid var(--line); height:14px}
+body.eink .icon-btn:hover,
+body.eink #badge .close:hover,
+body.eink .ep-close:hover,
+body.eink .t-more:hover,
+body.eink .g-addsub:hover,
+body.eink .ep-del:hover,
+body.eink .sheet-it:active,
+body.eink .sheet-day:active{background:var(--surface)}
+body.eink .dash-note,
+body.eink .sheet-tag,
+body.eink .pr-ref{background:var(--surface); border:2px solid var(--accent-line)}
+body.eink .pr-help-btn{background:var(--surface)}
+body.eink .pr-help-btn[aria-expanded="true"]{background:var(--accent); color:var(--surface)}
+body.eink .g-pill,
+body.eink .subj-prog{align-self:center}
+body.eink .t-date{background:var(--surface); border:2px solid transparent}
+body.eink .t-date:hover{border-color:var(--ink)}
+body.eink #zoneLate .zone-head .count{border-color:var(--late); color:var(--late)}
+body.eink #zoneToday .zone-head .count{border-color:var(--accent); color:var(--accent)}
+
+/* États : jamais la couleur seule (inversion, cadre épais, bandeau, libellé) */
+body.eink .ws-btn.on,
+body.eink .view-switch button.on{background:var(--accent); color:var(--surface); box-shadow:none}
+body.eink .view-switch button.on svg{color:var(--surface)}
+body.eink .view-switch button.on .sw-count{background:var(--surface); color:var(--accent)}
+body.eink .sheet-chip.on-wip{background:var(--wip); border-color:var(--wip); color:var(--surface)}
+body.eink .sheet-chip.on-standby{background:var(--standby); border-color:var(--standby); color:var(--surface)}
+body.eink .sheet-chip.on-prio{background:var(--late); border-color:var(--late); color:var(--surface)}
+body.eink .ep-seg button.on.bb{background:var(--standby); color:var(--surface)}
+body.eink #autoc div.sel,
+body.eink #autoc div:hover,
+body.eink .ctx-it:hover{background:var(--accent); color:var(--surface)}
+body.eink .ctx-it:hover svg,
+body.eink .ctx-it:hover .ctx-date{color:var(--surface)}
+body.eink .ctx-it.danger:hover{background:var(--late); color:var(--surface)}
+body.eink .ctx-it.danger:hover svg{color:var(--surface)}
+body.eink .task.selected .task-row{background:var(--surface); box-shadow:inset 6px 0 0 var(--accent); font-weight:700}
+body.eink .g-row.selected,
+body.eink .subj-row.selected{background:var(--surface)!important; box-shadow:inset 6px 0 0 var(--accent); font-weight:700}
+body.eink .pr-row.next{background:var(--surface); box-shadow:inset 6px 0 0 var(--accent)}
+body.eink .pr-row.next .task{font-weight:700}
+body.eink .pr-dot i{box-shadow:none}
+body.eink .pr-row.next .pr-dot i{outline:3px solid var(--accent); outline-offset:2px}
+body.eink .t-date.late{border-color:var(--late); color:var(--late); font-weight:800}
+body.eink .t-date.late::before{content:"\25B2\00a0"}
+body.eink .t-date.today{border-color:var(--accent); color:var(--accent)}
+body.eink .t-urg{border:2px solid var(--ink)}
+body.eink .pdot,
+body.eink .g-pdot{width:12px; height:12px}
+body.eink .pdot{margin-top:6px}
+body.eink .pdot.h,
+body.eink .g-pdot.h{background:var(--late); border:2px solid var(--ink); box-shadow:none}
+body.eink .pdot.n,
+body.eink .g-pdot.n{background:transparent; border:2px solid var(--ink)}
+body.eink .pdot.b,
+body.eink .g-pdot.b{background:var(--ink); border:0; opacity:1; width:6px; height:6px; margin-left:3px; margin-right:3px}
+body.eink .pdot.b{margin-top:9px}
+body.eink .cb{width:26px; height:26px; margin-top:0; border-width:2.5px; border-color:var(--ink)}
+body.eink .g-cb{width:24px; height:24px; border-width:2.5px; border-color:var(--ink)}
+body.eink .task.done .cb::after,
+body.eink .subj-row.done .cb::after{font-size:1rem}
+body.eink .task.wip .cb::after{width:12px; height:12px}
+body.eink .task.standby .cb::after{font-size:.8rem}
+body.eink .g-bar{background:var(--surface); border:2px solid var(--accent)}
+body.eink .g-bar.over{border-color:var(--late)}
+body.eink .g-fill{opacity:1}
+body.eink .g-today{opacity:1; width:3px}
+body.eink #badge .b-today-pro{color:var(--dash-pro)}
+body.eink #badge .b-today-perso{color:var(--dash-perso)}
+body.eink .toast-undo{color:var(--bg); text-decoration:underline; font-weight:800}
+
+/* Gras : titres et libellés seulement. Le texte des tâches (.t-text) garde sa graisse */
+body.eink .zone-head h2,
+body.eink .day-label,
+body.eink .g-name,
+body.eink .subj-title,
+body.eink .subjects-bar h2,
+body.eink .dash-card h3,
+body.eink .ep-head h3,
+body.eink .help-card h3,
+body.eink .help-card h4,
+body.eink .pr-help h3,
+body.eink .pr-kicker{font-weight:800}
+body.eink .ep-label,
+body.eink .auth-card label,
+body.eink .ctx-label,
+body.eink .sheet-label,
+body.eink .kpi-l,
+body.eink .dash-sub,
+body.eink .pr-sep,
+body.eink .ws-btn,
+body.eink .view-switch button,
+body.eink .chip,
+body.eink .pr-chip,
+body.eink .pr-btn,
+body.eink .ep-seg button,
+body.eink .rec-day,
+body.eink .icon-btn,
+body.eink .ep-cancel,
+body.eink .ep-save,
+body.eink .btn-ghost,
+body.eink .close-help,
+body.eink .sheet-chip,
+body.eink .ctx-it,
+body.eink .sheet-it,
+body.eink .count,
+body.eink .sw-count,
+body.eink .t-date,
+body.eink .quick-add-btn,
+body.eink .btn-newsubj,
+body.eink .g-addsub,
+body.eink .subj-sub-head,
+body.eink .tk,
+body.eink .pk,
+body.eink .sheet-day .d1,
+body.eink .sheet-title,
+body.eink .dir-bar .dp-folder{font-weight:700}
+
+/* Tailles : 16 px pour le texte des tâches, 14 px minimum pour les étiquettes */
+body.eink .t-text,
+body.eink #quickInput,
+body.eink .ep-input,
+body.eink #archSearch{font-size:1rem}
+body.eink .day-label,
+body.eink .t-date,
+body.eink .t-rec,
+body.eink .t-parent,
+body.eink .t-urg,
+body.eink .t-raw,
+body.eink .t-note,
+body.eink .count,
+body.eink .sw-count,
+body.eink .ws-btn,
+body.eink .chip,
+body.eink .pr-chip,
+body.eink .pr-btn,
+body.eink .ep-label,
+body.eink .ep-seg button,
+body.eink .rec-day,
+body.eink .ctx-label,
+body.eink .sheet-label,
+body.eink .sheet-tag,
+body.eink .sheet-chip,
+body.eink .sheet-day .d1,
+body.eink .kpi-l,
+body.eink .dash-sub,
+body.eink .dash-legend,
+body.eink .dash-hb,
+body.eink .dash-note,
+body.eink .dash-note-sm,
+body.eink .dash-empty,
+body.eink .dash-card>header span,
+body.eink .g-sub,
+body.eink .g-tick,
+body.eink .subj-meta,
+body.eink .arch-when,
+body.eink .pr-hidden,
+body.eink .pr-syncline,
+body.eink .pr-note,
+body.eink .pr-prog,
+body.eink .pr-kicker,
+body.eink .pr-sep,
+body.eink .pr-help-note,
+body.eink .pr-cand-d,
+body.eink .sync,
+body.eink .today-label,
+body.eink .dir-bar,
+body.eink .auth-hint,
+body.eink .quick-help,
+body.eink .quick-help code,
+body.eink .empty,
+body.eink .quick-add-btn,
+body.eink #quickDate,
+body.eink .icon-btn,
+body.eink .ctx-it,
+body.eink .ctx-it .ctx-date,
+body.eink .sheet-it .ctx-date,
+body.eink .subj-sub-head,
+body.eink .help-card td,
+body.eink .help-card code,
+body.eink #syncgCard,
+body.eink #badgeOptIn,
+body.eink #badge,
+body.eink #search,
+body.eink .toast-undo,
+body.eink .ep-cancel,
+body.eink .ep-del,
+body.eink .btn-ghost,
+body.eink .close-help,
+body.eink .g-addsub,
+body.eink .btn-newsubj,
+body.eink .ep-save,
+body.eink .view-switch button,
+body.eink #toast{font-size:.875rem}
+
+/* Cibles tactiles d'au moins 44 px */
+body.eink .icon-btn{height:44px; min-width:44px}
+body.eink .chip,
+body.eink .ws-btn,
+body.eink .view-switch button,
+body.eink .ep-seg button,
+body.eink .pr-btn,
+body.eink .pr-chip,
+body.eink .rec-day,
+body.eink .sheet-chip{min-height:44px}
+
+/* Mobile : la barre d'onglets du bas (le compteur ne doit pas recouvrir l'icône) */
+@media(max-width:639px){
+body.eink .view-switch .sw-count{border:0; background:transparent; padding:0 3px; top:2px; right:3px; font-size:.875rem; font-weight:800}
+body.eink .view-switch button.on .sw-count{background:var(--surface); color:var(--accent)}
+}
+/*THEME-EINK-CSS-END*/
+
 @media(prefers-reduced-motion:reduce){
   *{transition:none!important; animation:none!important}
 }
@@ -3466,17 +3787,52 @@ function initFileButtons(){
 }
 
 /* ---------- Thème ---------- */
+/*THEME-START*/
+/* Trois thèmes : clair → sombre → e-ink (B15). Choix gardé par appareil dans 'cap-theme'.
+   'eink' est une classe à part : jamais combinée avec 'dark'. */
+/*THEME-LOGIC-START*/
+const THEME={
+  KEY:'cap-theme',
+  LIST:['light','dark','eink'],
+  NAMES:{light:'clair', dark:'sombre', eink:'e-ink'},
+  valid(v){ return THEME.LIST.indexOf(v)>=0; },
+  initial(saved, systemDark){ return THEME.valid(saved) ? saved : (systemDark?'dark':'light'); },
+  next(cur){ return THEME.LIST[(THEME.LIST.indexOf(cur)+1)%THEME.LIST.length]; },
+  label(t){ return 'Thème : '+THEME.NAMES[t]; },
+  title(t){ return THEME.label(t)+' (appuyer pour changer)'; },
+  classes(t){ return {dark:t==='dark', eink:t==='eink'}; }
+};
+/*THEME-LOGIC-END*/
+function currentTheme(){
+  const c=document.body.classList;
+  return c.contains('eink')?'eink':(c.contains('dark')?'dark':'light');
+}
+function applyTheme(t){
+  const c=THEME.classes(t);
+  document.body.classList.toggle('dark', c.dark);
+  document.body.classList.toggle('eink', c.eink);
+  const btn=document.getElementById('themeBtn');
+  if(btn){
+    btn.title=THEME.title(t);
+    btn.setAttribute('aria-label', THEME.title(t));
+    const lbl=btn.querySelector('.lbl');
+    if(lbl) lbl.textContent=THEME.label(t);
+  }
+}
 (function(){
-  const saved=localStorage.getItem('cap-theme');
-  const dark = saved ? saved==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-  if(dark) document.body.classList.add('dark');
+  let saved=null;
+  try{ saved=localStorage.getItem(THEME.KEY); }catch(e){}
+  applyTheme(THEME.initial(saved, matchMedia('(prefers-color-scheme: dark)').matches));
 })();
 function initTheme(){
   $('themeBtn').onclick=()=>{
-    document.body.classList.toggle('dark');
-    localStorage.setItem('cap-theme', document.body.classList.contains('dark')?'dark':'light');
+    const t=THEME.next(currentTheme());
+    applyTheme(t);
+    try{ localStorage.setItem(THEME.KEY, t); }catch(e){}
+    toast(THEME.label(t));
   };
 }
+/*THEME-END*/
 
 init(); initTheme(); initFileButtons();
 </script>
