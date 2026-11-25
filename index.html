@@ -1138,6 +1138,10 @@ body.eink :focus-visible{outline-width:3px}
 /* Ligne d'aide de saisie (#projet @personne …) masquée, aussi dans la feuille de saisie mobile : la syntaxe reste dans le bouton Aide */
 body.eink .quick-help{display:none}
 
+/* Puces de filtre (#étiquette, @personne, ! hautes) masquées ; la recherche reste, et « tout afficher » reste visible quand un filtre est actif */
+body.eink .filters .chip{display:none}
+body.eink .filters .chip.reset.show{display:inline-block}
+
 /* Ruban du haut et en-tête : traits pleins, pas de dégradé ni de flou */
 body.eink::before{height:4px; background:var(--accent)}
 body.eink header{background:var(--bg); -webkit-backdrop-filter:none; backdrop-filter:none; border-bottom-width:2px}
