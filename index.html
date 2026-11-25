@@ -1074,19 +1074,22 @@ body.dark.perso .toast-undo{color:#7BE3D6}
 /*B16-H-START*/
 /* ═════════ HORS LIGNE (B16) : bandeau sous l'en-tête et écran sans copie ═════════ */
 #offlineBar{
-  display:none; align-items:center; gap:12px; flex-wrap:wrap; padding:9px 20px;
+  display:none; align-items:center; gap:10px; flex-wrap:nowrap; padding:7px 14px;
   background:var(--wip-soft); color:var(--wip); border-bottom:2px solid var(--wip);
   font-size:.85rem; font-weight:650;
 }
 #offlineBar.show{display:flex}
+#offlineText{flex:1 1 auto; min-width:0}
 #offlineBar button{
-  margin-left:auto; border-radius:8px; padding:6px 14px; font-weight:700; font-size:.8rem;
+  flex:none; margin-left:auto; width:36px; height:36px; padding:0; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
   background:var(--wip); color:var(--surface);
 }
 #offlineBar button:disabled, #offlineEmpty button:disabled{opacity:.55; cursor:default}
 /* thème e-ink : texte de 14 px au moins, boutons de 44 px, trait épais (le bloc e-ink général ne connaît pas ces éléments) */
 body.eink #offlineBar{font-size:.875rem; border-bottom-width:3px}
-body.eink #offlineBar button, body.eink #offlineEmpty button{min-height:44px; font-size:.875rem; font-weight:700}
+body.eink #offlineBar button{min-width:44px; min-height:44px}
+body.eink #offlineEmpty button{min-height:44px; font-size:.875rem; font-weight:700}
 body.eink #offlineEmpty p{font-size:1rem}
 #offlineEmpty{
   display:none; position:fixed; inset:0; z-index:9998; background:var(--bg);
@@ -1131,6 +1134,9 @@ body.eink *,
 body.eink *::before,
 body.eink *::after{transition:none!important; animation:none!important}
 body.eink :focus-visible{outline-width:3px}
+
+/* Ligne d'aide de saisie (#projet @personne …) masquée, aussi dans la feuille de saisie mobile : la syntaxe reste dans le bouton Aide */
+body.eink .quick-help{display:none}
 
 /* Ruban du haut et en-tête : traits pleins, pas de dégradé ni de flou */
 body.eink::before{height:4px; background:var(--accent)}
@@ -1194,15 +1200,13 @@ body.eink .dash-hb-track,
 body.eink .g-pill,
 body.eink .subj-prog,
 body.eink .help-card code,
-body.eink .quick-help code,
 body.eink .sw-count,
 body.eink .count{background:var(--surface)}
 body.eink .sw-count,
 body.eink .count,
 body.eink .g-pill,
 body.eink .subj-prog,
-body.eink .help-card code,
-body.eink .quick-help code{border:2px solid var(--line)}
+body.eink .help-card code{border:2px solid var(--line)}
 body.eink .ws-switch,
 body.eink .view-switch{border:2px solid var(--line)}
 body.eink .dash-hb-track{border:2px solid var(--line); height:14px}
@@ -1375,8 +1379,6 @@ body.eink .sync,
 body.eink .today-label,
 body.eink .dir-bar,
 body.eink .auth-hint,
-body.eink .quick-help,
-body.eink .quick-help code,
 body.eink .empty,
 body.eink .quick-add-btn,
 body.eink #quickDate,
@@ -1500,7 +1502,7 @@ body.eink .view-switch button.on .sw-count{background:var(--surface); color:var(
   <div id="wsBar"><div class="ws-dot"></div><span id="wsBarLabel"></span></div>
 </header>
 <!--B16-I-START-->
-<div id="offlineBar" role="status" aria-live="polite"><span id="offlineText"></span><button id="offlineRetry" type="button">Réessayer</button></div>
+<div id="offlineBar" role="status" aria-live="polite"><span id="offlineText"></span><button id="offlineRetry" type="button" aria-label="Réessayer" title="Réessayer"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 5v6h-6"/></svg></button></div>
 <!--B16-I-END-->
 
 <div class="app-root"><div class="task-col">
@@ -2199,11 +2201,11 @@ const OFFLINE={
   ageText(ts){
     if(typeof ts!=="number" || !isFinite(ts)) return null;
     const d=new Date(ts), p=n=>String(n).padStart(2,"0");
-    return p(d.getDate())+"/"+p(d.getMonth()+1)+" à "+p(d.getHours())+":"+p(d.getMinutes());
+    return p(d.getDate())+"/"+p(d.getMonth()+1)+" "+p(d.getHours())+":"+p(d.getMinutes());
   },
   bannerText(ts){
     const a=OFFLINE.ageText(ts);
-    return "Hors ligne — lecture seule"+(a?" — données du "+a:"");
+    return "Hors ligne · lecture seule"+(a?" · "+a:"");
   },
   // Copie des tâches gardée à chaque lecture réussie : c'est elle qu'on montre sans réseau.
   remember(ws,text){
