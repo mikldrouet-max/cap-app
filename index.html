@@ -1071,6 +1071,33 @@ body.dark.perso .toast-undo{color:#7BE3D6}
   .day-label{padding:8px 14px 4px}
 }
 
+/*B16-H-START*/
+/* ═════════ HORS LIGNE (B16) : bandeau sous l'en-tête et écran sans copie ═════════ */
+#offlineBar{
+  display:none; align-items:center; gap:12px; flex-wrap:wrap; padding:9px 20px;
+  background:var(--wip-soft); color:var(--wip); border-bottom:2px solid var(--wip);
+  font-size:.85rem; font-weight:650;
+}
+#offlineBar.show{display:flex}
+#offlineBar button{
+  margin-left:auto; border-radius:8px; padding:6px 14px; font-weight:700; font-size:.8rem;
+  background:var(--wip); color:var(--surface);
+}
+#offlineBar button:disabled, #offlineEmpty button:disabled{opacity:.55; cursor:default}
+/* thème e-ink : texte de 14 px au moins, boutons de 44 px, trait épais (le bloc e-ink général ne connaît pas ces éléments) */
+body.eink #offlineBar{font-size:.875rem; border-bottom-width:3px}
+body.eink #offlineBar button, body.eink #offlineEmpty button{min-height:44px; font-size:.875rem; font-weight:700}
+body.eink #offlineEmpty p{font-size:1rem}
+#offlineEmpty{
+  display:none; position:fixed; inset:0; z-index:9998; background:var(--bg);
+  align-items:center; justify-content:center; padding:24px;
+}
+#offlineEmpty .auth-card{text-align:center}
+#offlineEmpty button{
+  margin-top:6px; border-radius:10px; padding:11px 22px; font-weight:700; font-size:.95rem;
+  background:var(--accent); color:var(--surface);
+}
+/*B16-H-END*/
 /*THEME-EINK-CSS-START*/
 /* ═════════ THEME E-INK (B15) ═════════
    Troisième thème, pour écran e-ink couleur (Boox Note Air 6 C dans Memo Day) : classe `eink` posée sur <body>,
@@ -1418,6 +1445,14 @@ body.eink .view-switch button.on .sw-count{background:var(--surface); color:var(
   </div>
 </div>
 
+<!--B16-J-START-->
+<div id="offlineEmpty">
+  <div class="auth-card">
+    <p id="offlineEmptyText"></p>
+    <button id="offlineEmptyRetry" type="button">Réessayer</button>
+  </div>
+</div>
+<!--B16-J-END-->
 <!-- ========== Application ========== -->
 <div id="app" style="display:none">
 <header>
@@ -1464,6 +1499,9 @@ body.eink .view-switch button.on .sw-count{background:var(--surface); color:var(
   <div class="dir-bar" id="dirBar"><span id="dirPath"></span></div>
   <div id="wsBar"><div class="ws-dot"></div><span id="wsBarLabel"></span></div>
 </header>
+<!--B16-I-START-->
+<div id="offlineBar" role="status" aria-live="polite"><span id="offlineText"></span><button id="offlineRetry" type="button">Réessayer</button></div>
+<!--B16-I-END-->
 
 <div class="app-root"><div class="task-col">
 
@@ -2135,6 +2173,46 @@ ${raw}`;
   a.click();
 }
 
+/*B16-A-START*/
+/* ---------- Démarrage hors ligne (B16) : lecture seule sur la dernière copie des tâches ---------- */
+/*OFFLINE-LOGIC-START*/
+const OFFLINE={
+  TIMEOUT_MS:8000,   // au-delà, GitHub est considéré injoignable
+  on:false,          // vrai : on affiche la copie gardée sur l'appareil, sans rien écrire
+  busy:false,        // une reprise en ligne est en cours
+  last:0,            // heure du dernier essai de reprise automatique
+  EMPTY_TEXT:"Hors ligne — aucune donnée enregistrée sur cet appareil. Ouvrez Cap. une fois avec le réseau, puis réessayez.",
+  netErr(e){ const x=new Error((e&&e.message)||"réseau inaccessible"); x.netErr=true; return x; },
+  // Panne réseau (et non refus du jeton ni bug) : exception de fetch, délai dépassé, ou erreur construite par netErr.
+  isNetworkError(e){
+    if(!e) return false;
+    if(e.netErr===true || e.name==="AbortError") return true;
+    return e.name==="TypeError" && /fetch|network|load failed|failed to/i.test(String(e.message));
+  },
+  // Réponse de GET /user : "ok" (connecté), "denied" (jeton refusé), "network" (pas de réseau, GitHub en panne, service worker hors ligne).
+  classify(status,data){
+    if(data && data.error==="offline") return "network";
+    if(status>=200 && status<300) return (data && data.login) ? "ok" : "network";
+    if(status===407 || status===408 || status===429 || (status>=500 && status<=599)) return "network";
+    return "denied";
+  },
+  ageText(ts){
+    if(typeof ts!=="number" || !isFinite(ts)) return null;
+    const d=new Date(ts), p=n=>String(n).padStart(2,"0");
+    return p(d.getDate())+"/"+p(d.getMonth()+1)+" à "+p(d.getHours())+":"+p(d.getMinutes());
+  },
+  bannerText(ts){
+    const a=OFFLINE.ageText(ts);
+    return "Hors ligne — lecture seule"+(a?" — données du "+a:"");
+  },
+  // Copie des tâches gardée à chaque lecture réussie : c'est elle qu'on montre sans réseau.
+  remember(ws,text){
+    idbSet("cap_last_"+ws, text).catch(()=>{});
+    idbSet("cap_last_ts_"+ws, Date.now()).catch(()=>{});
+  }
+};
+/*OFFLINE-LOGIC-END*/
+/*B16-A-END*/
 async function ghRead(espace, type){
   const filename = GH_FILES[espace][type];
   const url = `https://api.github.com/repos/${ghAuth.dataOwner}/${ghAuth.dataRepo}/contents/${filename}`;
@@ -2155,10 +2233,15 @@ async function ghRead(espace, type){
     }
     throw new Error(`GitHub ${res.status}`);
   }
+  /*B16-B-START*/
   const data = await res.json();
+  if(data && data.error==="offline") throw OFFLINE.netErr(new Error("hors ligne"));   // réponse du service worker sans réseau
   wsSha[espace][type] = data.sha;
   const raw = b64utf8(data.content);
-  return decryptText(raw);  // déchiffre si chiffré, passe-through sinon
+  const plain = await decryptText(raw);   // déchiffre si chiffré, passe-through sinon
+  if(type === "main") OFFLINE.remember(espace, plain);   // copie gardée pour un démarrage sans réseau
+  return plain;
+  /*B16-B-END*/
 }
 
 async function ghWrite(espace, type, contenu){
@@ -2183,14 +2266,25 @@ async function ghWrite(espace, type, contenu){
   wsSha[espace][type] = data.content.sha;
 }
 
+/*B16-C-START*/
 async function ghTestAuth(token){
-  const res = await fetch("https://api.github.com/user", {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if(!res.ok) return null;
-  const data = await res.json();
-  return data.login;
+  // Trois issues : le nom du compte (connecté), null (jeton refusé), ou une erreur « réseau » (voir OFFLINE.isNetworkError).
+  const ctl = new AbortController();
+  const timer = setTimeout(()=>ctl.abort(), OFFLINE.TIMEOUT_MS);
+  let res, data = null;
+  try{
+    res = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${token}` }, signal: ctl.signal
+    });
+    if(res.ok) data = await res.json().catch(()=>null);
+  }catch(e){
+    throw OFFLINE.netErr(e);
+  }finally{ clearTimeout(timer); }
+  const kind = OFFLINE.classify(res.status, data);
+  if(kind==="network") throw OFFLINE.netErr(new Error("réseau inaccessible"));
+  return kind==="ok" ? data.login : null;
 }
+/*B16-C-END*/
 
 /* ---------- Adaptateurs cap. → GitHub ---------- */
 const FILE_NAMES={
@@ -2290,6 +2384,7 @@ window.restoreLastBackup=async function(ws){
   alert("Restauré. Rechargez l'app pour voir l'état restauré.");
 };
 async function persist(){
+  /*B16-D-START*/ if(OFFLINE.on){ offlineRefuse(); render(); return; } /*B16-D-END*/
   setSync("saving");
   const targetWs = workspace;                    // espace actif au moment de l'appel
   const ws = model.ws || targetWs;                // espace AUQUEL ce modèle appartient
@@ -2449,9 +2544,21 @@ async function init(){
   if(savedWs === "pro" || savedWs === "perso") workspace = savedWs;
   updateWsUI(); // synchronise boutons/couleur dès le départ (sinon Pro reste affiché "on" par défaut)
 
+  /*B16-E-START*/
   if(savedToken && savedPass){
     ghAuth.token = savedToken;
-    const owner = await ghTestAuth(savedToken);
+    let owner = null;
+    try{
+      owner = await ghTestAuth(savedToken);
+    }catch(e){
+      if(OFFLINE.isNetworkError(e)){
+        // Pas de réseau, GitHub injoignable ou délai dépassé : on montre la dernière copie des tâches, en lecture seule.
+        ghAuth.token = null;
+        await startOffline();
+        return;
+      }
+      console.error("Test du jeton:", e);
+    }
     if(owner){
       ghAuth.owner = owner;
       const { dataOwner, dataRepo } = parseRepoInput(savedRepo || "cap-data", owner);
@@ -2460,13 +2567,110 @@ async function init(){
         await initCrypto(savedPass);
         await loadAll(true);
         return;
-      }catch(e){ console.error("Erreur chargement:", e); }
+      }catch(e){
+        console.error("Erreur chargement:", e);
+        wsBusy = false;   // sinon les boutons Pro / Perso restent bloqués après un chargement raté
+        if(OFFLINE.isNetworkError(e)){ ghAuth.token = null; await startOffline(); return; }
+      }
     }
   }
   // Afficher modal auth
   showAuthModal();
+  /*B16-E-END*/
 }
 
+/*B16-F-START*/
+/* ---------- Démarrage hors ligne : lecture seule sur la dernière copie (B16) ---------- */
+async function startOffline(){
+  OFFLINE.on = true;
+  const ws = workspace, other = ws==="pro" ? "perso" : "pro";
+  const get = async w => {
+    const text = await idbGet("cap_last_"+w).catch(()=>null);
+    const ts = await idbGet("cap_last_ts_"+w).catch(()=>null);
+    return typeof text==="string" ? { text, ts } : null;
+  };
+  const cur = await get(ws), oth = await get(other);
+  document.getElementById("authModal").style.display = "none";
+  if(!cur){ offlineEmptyShow(); return; }
+  model = parseFile(cur.text); model.ws = ws; lastSeenText = cur.text;
+  // l'autre espace est prêt pour la bascule Pro / Perso, sans réseau
+  wsCache[other] = oth
+    ? { model: Object.assign(parseFile(oth.text), { ws: other }), lastSeenText: oth.text }
+    : { model: { preamble:[], tasks:[], ws: other }, lastSeenText: "" };
+  document.getElementById("app").style.display = "block";
+  offlineShow(cur.ts);
+  render();
+}
+function offlineShow(ts){
+  OFFLINE.on = true;
+  document.getElementById("offlineText").textContent = OFFLINE.bannerText(ts);
+  document.getElementById("offlineBar").classList.add("show");
+  document.getElementById("sync").className = "sync error";
+  document.getElementById("syncText").textContent = "Hors ligne";
+}
+function offlineEmptyShow(){
+  document.getElementById("offlineEmptyText").textContent = OFFLINE.EMPTY_TEXT;
+  document.getElementById("offlineEmpty").style.display = "flex";
+}
+function offlineLeave(giveUp){
+  OFFLINE.on = false;
+  document.getElementById("offlineBar").classList.remove("show");
+  document.getElementById("offlineEmpty").style.display = "none";
+  if(!giveUp) setSync("ok");
+}
+// Lecture seule : une modification faite hors ligne n'est jamais gardée ; l'écran revient à la copie.
+function offlineRefuse(){
+  toast("Hors ligne : lecture seule, rien n'est enregistré");
+  try{ const ws = model.ws || workspace; model = parseFile(lastSeenText || ""); model.ws = ws; }catch(e){}
+}
+// Reprise en ligne : même chemin que le démarrage normal, donc relecture complète avant toute écriture.
+async function resumeOnline(manual){
+  if(!OFFLINE.on || OFFLINE.busy) return;
+  if(!manual && Date.now() - OFFLINE.last < 5000) return;   // pas d'essais en rafale
+  OFFLINE.busy = true; OFFLINE.last = Date.now();
+  const btns = [document.getElementById("offlineRetry"), document.getElementById("offlineEmptyRetry")];
+  btns.forEach(b => { if(b) b.disabled = true; });
+  try{
+    const token = await idbGet("gh_token").catch(()=>null);
+    const repo  = await idbGet("gh_repo").catch(()=>null);
+    const pass  = await idbGet("gh_pass").catch(()=>null);
+    if(!token || !pass){ offlineLeave(true); showAuthModal(); return; }
+    ghAuth.token = token;
+    let owner = null;
+    try{ owner = await ghTestAuth(token); }
+    catch(e){ ghAuth.token = null; if(manual) toast("Toujours hors ligne"); return; }
+    if(!owner){ ghAuth.token = null; offlineLeave(true); showAuthModal(); return; }   // jeton refusé
+    ghAuth.owner = owner;
+    const { dataOwner, dataRepo } = parseRepoInput(repo || "cap-data", owner);
+    ghAuth.dataOwner = dataOwner; ghAuth.dataRepo = dataRepo;
+    const keep = { pro: wsCache.pro, perso: wsCache.perso };
+    try{
+      await initCrypto(pass);
+      delete wsCache.pro; delete wsCache.perso;   // les copies du démarrage hors ligne sont périmées : relire les deux espaces
+      await loadAll(true);
+      offlineLeave();
+    }catch(e){
+      console.error("Reprise en ligne:", e);
+      wsBusy = false; ghAuth.token = null;
+      for(const k of ["pro","perso"]) if(keep[k] && !wsCache[k]) wsCache[k] = keep[k];
+      if(manual) toast(OFFLINE.isNetworkError(e) ? "Toujours hors ligne" : "Erreur : " + e.message);
+    }
+  }finally{
+    OFFLINE.busy = false;
+    btns.forEach(b => { if(b) b.disabled = false; });
+  }
+}
+(function(){
+  const retry = () => resumeOnline(true);
+  document.getElementById("offlineRetry").onclick = retry;
+  document.getElementById("offlineEmptyRetry").onclick = retry;
+  document.getElementById("resyncBtn").addEventListener("click", () => { if(OFFLINE.on) resumeOnline(true); });
+  window.addEventListener("online", () => resumeOnline(false));
+  window.addEventListener("focus", () => resumeOnline(false));
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) resumeOnline(false); });
+  setInterval(() => { if(!document.hidden) resumeOnline(false); }, 60000);
+})();
+/*B16-F-END*/
 function showAuthModal(){
   const m = $("authModal");
   m.style.display = "flex";
@@ -2487,12 +2691,15 @@ function showAuthModal(){
     const st = $("ghAuthStatus");
     st.style.display="block"; st.style.background="var(--accent-soft)"; st.style.color="var(--accent)";
     st.textContent = "Connexion GitHub…";
-    const owner = await ghTestAuth(token);
+    /*B16-G-START*/
+    let owner = null, netDown = false;
+    try{ owner = await ghTestAuth(token); }catch(e){ netDown = true; }
     if(!owner){
       st.style.background="var(--late-soft)"; st.style.color="var(--late)";
-      st.textContent = "✗ Jeton invalide ou réseau inaccessible";
+      st.textContent = netDown ? "✗ Réseau inaccessible : vérifiez la connexion et réessayez" : "✗ Jeton invalide";
       $("ghAuthBtn").disabled=false; $("ghAuthBtn").textContent="Se connecter"; return;
     }
+    /*B16-G-END*/
     ghAuth.token = token; ghAuth.owner = owner;
     const { dataOwner, dataRepo } = parseRepoInput(repo, owner);
     ghAuth.dataOwner = dataOwner; ghAuth.dataRepo = dataRepo;
